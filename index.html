@@ -39,13 +39,13 @@ textarea{width:100%;padding:10px 6px;background:rgba(255,255,255,.12);border:2px
   </div>
 
   <div class="step-box">
-    <div class="stitle">ขั้นตอนที่ 1 — คัดลอกเลขซีเรียล</div>
+    <div class="stitle">ขั้นตอนที่ 1 — เลขซีเรียลซิมของคุณ</div>
     <textarea id="ta" readonly rows="2"></textarea>
-    <div class="hint">👆 กดค้างที่ตัวเลขด้านบน → เลือก <strong>"คัดลอก" / "Copy"</strong></div>
+    <div class="hint">👆 กดปุ่มสีม่วงด้านล่างเพื่อคัดลอกอัตโนมัติ</div>
   </div>
 
   <button class="btn b1" id="b1" onclick="doStep2()">
-    ขั้นตอนที่ 2 — กดที่นี่หลังคัดลอกเสร็จ ✅
+    ขั้นตอนที่ 2 — กดเพื่อคัดลอกเลขซีเรียล 📋
   </button>
 
   <button class="btn b2" id="b2" onclick="doStep3()">
@@ -120,14 +120,44 @@ if (!serial) {
 var confirmed = false;
 
 function doStep2() {
+  // คัดลอกอัตโนมัติ
+  var ta = document.getElementById('ta');
+  var copied = false;
+
+  // วิธีที่ 1: Clipboard API (modern browsers)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(serial).then(function() {
+      markCopied(true);
+    }).catch(function() {
+      fallbackCopy(ta);
+    });
+  } else {
+    fallbackCopy(ta);
+  }
+}
+
+function fallbackCopy(ta) {
+  try {
+    ta.removeAttribute('readonly');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    var ok = document.execCommand('copy');
+    ta.setAttribute('readonly', true);
+    markCopied(ok);
+  } catch(e) {
+    markCopied(false);
+  }
+}
+
+function markCopied(success) {
   confirmed = true;
   var b1 = document.getElementById('b1');
-  b1.textContent = '✅ คัดลอกแล้ว!';
+  b1.textContent = success ? '✅ คัดลอกเลขซีเรียลแล้ว!' : '✅ กดยืนยันแล้ว (กดค้างที่ตัวเลขเพื่อคัดลอก)';
   b1.className = 'btn b1 done';
   var b2 = document.getElementById('b2');
   b2.className = 'btn b2 active';
   var msg = document.getElementById('msg');
-  msg.innerHTML = '<span style="color:#6ee7b7">✅ พร้อมลงทะเบียน — กดปุ่มแดงด้านบนได้เลย</span>';
+  msg.innerHTML = '<span style="color:#6ee7b7">✅ ' + (success ? 'คัดลอกเลขซีเรียลแล้ว — ' : '') + 'กดปุ่มแดงเพื่อลงทะเบียนได้เลย</span>';
   msg.className = 'ok';
 }
 
