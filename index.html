@@ -60,6 +60,8 @@ var params = new URLSearchParams(window.location.search);
 var serial = params.get('s') || '';
 var tracking = params.get('t') || '';
 var lineToken = params.get('line') || '';
+// decode อีกรอบกรณี encode ซ้อน
+try { if (lineToken) lineToken = decodeURIComponent(lineToken); } catch(e) {}
 
 if (!serial) {
   document.getElementById('main').innerHTML = '<div style="color:#f87171;padding:40px 20px;font-size:16px">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
@@ -97,15 +99,15 @@ if (!serial) {
     for (var i=0; i<f.length; i++) if(f[i]==='1') ctx.fillRect(2+i*bw,0,bw,54);
   })();
 
-  // ===== แจ้ง LINE + บันทึกสถานะ =====
+  // ===== แจ้ง LINE ร้านทันทีที่ลูกค้าเปิดหน้า =====
   function notifyScanned() {
     var now = new Date().toLocaleString('th-TH');
-    var msg = '\uD83D\uDD14 ลูกค้าสแกน QR Code แล้ว!\n\u2022 เลขซีเรียลซิม: ' + serial + '\n\u2022 เลขติดตาม: ' + tracking + '\n\u2022 เวลา: ' + now;
+    var msg = '\n🔔 ลูกค้าสแกน QR Code แล้ว!\n━━━━━━━━━━━━━━━━\n📋 เลขซีเรียลซิม:\n' + serial + '\n\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n━━━━━━━━━━━━━━━━\n✅ กรุณาอัปเดตสถานะในระบบ';
 
-    // ส่ง LINE Notify (ต้องใส่ token ใน URL หรือ settings)
-    if (lineToken) {
+    if (lineToken && lineToken.length > 10) {
       fetch('https://notify-api.line.me/api/notify', {
         method: 'POST',
+        mode: 'no-cors',
         headers: {
           'Authorization': 'Bearer ' + lineToken,
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -113,22 +115,8 @@ if (!serial) {
         body: 'message=' + encodeURIComponent(msg)
       }).catch(function(){});
     }
-
-    // บันทึก scan event ลง localStorage เพื่อให้แอพ SIM Tracker อ่านได้
-    try {
-      var key = 'sim_scan_' + serial;
-      var event = { serial: serial, tracking: tracking, scannedAt: Date.now() };
-      localStorage.setItem(key, JSON.stringify(event));
-      // เก็บ list ของซิมที่สแกนแล้ว
-      var allScanned = JSON.parse(localStorage.getItem('sim_scanned_list') || '[]');
-      if (!allScanned.find(function(x){ return x.serial === serial; })) {
-        allScanned.push(event);
-        localStorage.setItem('sim_scanned_list', JSON.stringify(allScanned));
-      }
-    } catch(e) {}
   }
 
-  // เรียกทันทีที่เปิดหน้า (ลูกค้าสแกน QR แล้ว)
   notifyScanned();
 }
 
