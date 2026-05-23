@@ -59,9 +59,10 @@ textarea{width:100%;padding:10px 6px;background:rgba(255,255,255,.12);border:2px
 var params = new URLSearchParams(window.location.search);
 var serial = params.get('s') || '';
 var tracking = params.get('t') || '';
-var lineToken = params.get('line') || '';
-// decode อีกรอบกรณี encode ซ้อน
-try { if (lineToken) lineToken = decodeURIComponent(lineToken); } catch(e) {}
+var tgBot = params.get('tgbot') || '';
+var tgChat = params.get('tgchat') || '';
+try { if (tgBot) tgBot = decodeURIComponent(tgBot); } catch(e) {}
+try { if (tgChat) tgChat = decodeURIComponent(tgChat); } catch(e) {}
 
 if (!serial) {
   document.getElementById('main').innerHTML = '<div style="color:#f87171;padding:40px 20px;font-size:16px">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
@@ -99,20 +100,16 @@ if (!serial) {
     for (var i=0; i<f.length; i++) if(f[i]==='1') ctx.fillRect(2+i*bw,0,bw,54);
   })();
 
-  // ===== แจ้ง LINE ร้านทันทีที่ลูกค้าเปิดหน้า =====
+  // ===== แจ้งเตือน Telegram ร้านทันทีที่ลูกค้าเปิดหน้า =====
   function notifyScanned() {
     var now = new Date().toLocaleString('th-TH');
-    var msg = '\n🔔 ลูกค้าสแกน QR Code แล้ว!\n━━━━━━━━━━━━━━━━\n📋 เลขซีเรียลซิม:\n' + serial + '\n\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n━━━━━━━━━━━━━━━━\n✅ กรุณาอัปเดตสถานะในระบบ';
+    var msg = '🔔 ลูกค้าสแกน QR Code แล้ว!\n📋 เลขซีเรียลซิม: ' + serial + '\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n\n✅ กรุณาอัปเดตสถานะในแอพ';
 
-    if (lineToken && lineToken.length > 10) {
-      fetch('https://notify-api.line.me/api/notify', {
+    if (tgBot && tgChat) {
+      fetch('https://api.telegram.org/bot' + tgBot + '/sendMessage', {
         method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Authorization': 'Bearer ' + lineToken,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: 'message=' + encodeURIComponent(msg)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tgChat, text: msg })
       }).catch(function(){});
     }
   }
