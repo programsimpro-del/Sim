@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>รับเลขซีเรียลซิม</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:linear-gradient(160deg,#0a0a1a,#0f172a,#1a0a2e);font-family:'Noto Sans Thai',sans-serif;display:flex;justify-content:center;padding:16px;color:#fff}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:24px 18px;max-width:400px;width:100%;text-align:center;margin-top:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.icon{font-size:40px;margin-bottom:8px}
+h1{font-size:20px;font-weight:800;margin-bottom:6px}
+.badge{display:inline-block;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);border-radius:99px;padding:3px 14px;color:#a78bfa;font-size:12px;font-weight:700;margin-bottom:16px}
+.bc-box{background:#fff;border-radius:12px;padding:12px 6px 8px;margin-bottom:14px}
+canvas{display:block;margin:0 auto;max-width:100%}
+.bnum{font-family:monospace;font-size:12px;color:#111;margin-top:6px;font-weight:700;word-break:break-all;letter-spacing:1px}
+.step-box{background:rgba(79,70,229,.1);border:1px solid rgba(99,102,241,.45);border-radius:12px;padding:12px;margin-bottom:10px}
+.stitle{color:#c7d2fe;font-size:13px;font-weight:700;margin-bottom:8px}
+textarea{width:100%;padding:10px 6px;background:rgba(255,255,255,.12);border:2px solid #6366f1;border-radius:8px;color:#fff;font-size:19px;font-family:monospace;font-weight:700;letter-spacing:2px;text-align:center;resize:none;outline:none;-webkit-user-select:text;user-select:text;cursor:text;line-height:1.5}
+.hint{color:#fbbf24;font-size:12px;margin-top:7px;line-height:1.6}
+.btn{width:100%;padding:13px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:9px;color:#fff;transition:all .3s;font-family:inherit}
+.b1{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
+.b1.done{background:linear-gradient(135deg,#059669,#10b981)}
+.b2{background:rgba(100,100,120,.4);cursor:not-allowed;opacity:.5}
+.b2.active{background:linear-gradient(135deg,#dc2626,#ef4444);cursor:pointer;opacity:1;box-shadow:0 4px 16px rgba(220,38,38,.4)}
+.warn{color:#f59e0b;font-size:12px;margin-top:8px;background:rgba(245,158,11,.08);border-radius:8px;padding:7px 12px}
+.ok{color:#6ee7b7;font-size:12px;margin-top:8px}
+.err{color:#f87171;padding:40px 20px;font-size:16px}
+</style>
+</head>
+<body>
+<div class="card" id="main">
+  <div class="icon">📱</div>
+  <h1>รับเลขซีเรียลซิม</h1>
+  <div class="badge" id="trackBadge">กำลังโหลด...</div>
+
+  <div class="bc-box">
+    <canvas id="bc"></canvas>
+    <div class="bnum" id="serialNum"></div>
+  </div>
+
+  <div class="step-box">
+    <div class="stitle">ขั้นตอนที่ 1 — คัดลอกเลขซีเรียล</div>
+    <textarea id="ta" readonly rows="2"></textarea>
+    <div class="hint">👆 กดค้างที่ตัวเลขด้านบน → เลือก <strong>"คัดลอก" / "Copy"</strong></div>
+  </div>
+
+  <button class="btn b1" id="b1" onclick="doStep2()">
+    ขั้นตอนที่ 2 — กดที่นี่หลังคัดลอกเสร็จ ✅
+  </button>
+
+  <button class="btn b2" id="b2" onclick="doStep3()">
+    ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (True)
+  </button>
+
+  <div id="msg" class="warn">⚠️ ต้องคัดลอกและกดยืนยันก่อนลงทะเบียน</div>
+</div>
+
+<script>
+// อ่าน serial และ tracking จาก URL query
+var params = new URLSearchParams(window.location.search);
+var serial = params.get('s') || '';
+var tracking = params.get('t') || '';
+
+if (!serial) {
+  document.getElementById('main').innerHTML = '<div class="err">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
+} else {
+  // ใส่ข้อมูล
+  document.getElementById('trackBadge').textContent = 'เลขติดตามซิม: ' + tracking;
+  document.getElementById('serialNum').textContent = serial;
+  var ta = document.getElementById('ta');
+  ta.value = serial;
+
+  // Auto-select
+  ['focus','click'].forEach(function(e){
+    ta.addEventListener(e, function(){ this.select(); this.setSelectionRange(0,9999); });
+  });
+  ta.addEventListener('touchstart', function(){
+    var self = this;
+    setTimeout(function(){ self.select(); self.setSelectionRange(0,9999); }, 50);
+  });
+  setTimeout(function(){ ta.focus(); ta.select(); }, 300);
+
+  // วาด Barcode
+  (function(){
+    var cv = document.getElementById('bc');
+    var ctx = cv.getContext('2d');
+    var segs = ['11010000100'];
+    for (var i = 0; i < serial.length; i++) {
+      var p = '';
+      for (var j = 0; j < 11; j++) p += ((serial.charCodeAt(i)+32)>>j)&1 ? '1':'0';
+      segs.push(p);
+    }
+    segs.push('1100011101011');
+    var f = segs.join('');
+    var bw = Math.max(1, Math.floor(310/f.length));
+    cv.width = f.length*bw+4; cv.height = 54;
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,54);
+    ctx.fillStyle='#000';
+    for (var i=0; i<f.length; i++) if(f[i]==='1') ctx.fillRect(2+i*bw,0,bw,54);
+  })();
+}
+
+var confirmed = false;
+
+function doStep2() {
+  confirmed = true;
+  var b1 = document.getElementById('b1');
+  b1.textContent = '✅ คัดลอกแล้ว!';
+  b1.className = 'btn b1 done';
+  var b2 = document.getElementById('b2');
+  b2.className = 'btn b2 active';
+  var msg = document.getElementById('msg');
+  msg.innerHTML = '<span style="color:#6ee7b7">✅ พร้อมลงทะเบียน — กดปุ่มแดงด้านบนได้เลย</span>';
+  msg.className = 'ok';
+}
+
+function doStep3() {
+  if (confirmed) {
+    window.location.href = 'https://app.true.th/prepaid-registration?language=th';
+  }
+}
+</script>
+</body>
+</html>
