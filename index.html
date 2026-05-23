@@ -8,7 +8,6 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{min-height:100vh;background:linear-gradient(160deg,#0a0a1a,#0f172a,#1a0a2e);font-family:'Noto Sans Thai',sans-serif;display:flex;justify-content:center;padding:16px;color:#fff}
 .card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:24px 18px;max-width:400px;width:100%;text-align:center;margin-top:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.icon{font-size:40px;margin-bottom:8px}
 h1{font-size:20px;font-weight:800;margin-bottom:6px}
 .badge{display:inline-block;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);border-radius:99px;padding:3px 14px;color:#a78bfa;font-size:12px;font-weight:700;margin-bottom:16px}
 .bc-box{background:#fff;border-radius:12px;padding:12px 6px 8px;margin-bottom:14px}
@@ -25,13 +24,13 @@ textarea{width:100%;padding:10px 6px;background:rgba(255,255,255,.12);border:2px
 .b2.active{background:linear-gradient(135deg,#dc2626,#ef4444);cursor:pointer;opacity:1;box-shadow:0 4px 16px rgba(220,38,38,.4)}
 .warn{color:#f59e0b;font-size:12px;margin-top:8px;background:rgba(245,158,11,.08);border-radius:8px;padding:7px 12px}
 .ok{color:#6ee7b7;font-size:12px;margin-top:8px}
-.err{color:#f87171;padding:40px 20px;font-size:16px}
+.notify-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6ee7b7;line-height:1.7}
 </style>
 </head>
 <body>
 <div class="card" id="main">
-  <div class="icon">📱</div>
-  <h1>รับเลขซีเรียลซิม</h1>
+  <div style="font-size:40px;margin-bottom:8px">📱</div>
+  <h1>รับเลขซีเรียลซิมของคุณ</h1>
   <div class="badge" id="trackBadge">กำลังโหลด...</div>
 
   <div class="bc-box">
@@ -57,21 +56,19 @@ textarea{width:100%;padding:10px 6px;background:rgba(255,255,255,.12);border:2px
 </div>
 
 <script>
-// อ่าน serial และ tracking จาก URL query
 var params = new URLSearchParams(window.location.search);
 var serial = params.get('s') || '';
 var tracking = params.get('t') || '';
+var lineToken = params.get('line') || '';
 
 if (!serial) {
-  document.getElementById('main').innerHTML = '<div class="err">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
+  document.getElementById('main').innerHTML = '<div style="color:#f87171;padding:40px 20px;font-size:16px">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
 } else {
-  // ใส่ข้อมูล
   document.getElementById('trackBadge').textContent = 'เลขติดตามซิม: ' + tracking;
   document.getElementById('serialNum').textContent = serial;
   var ta = document.getElementById('ta');
   ta.value = serial;
 
-  // Auto-select
   ['focus','click'].forEach(function(e){
     ta.addEventListener(e, function(){ this.select(); this.setSelectionRange(0,9999); });
   });
@@ -99,6 +96,40 @@ if (!serial) {
     ctx.fillStyle='#000';
     for (var i=0; i<f.length; i++) if(f[i]==='1') ctx.fillRect(2+i*bw,0,bw,54);
   })();
+
+  // ===== แจ้ง LINE + บันทึกสถานะ =====
+  function notifyScanned() {
+    var now = new Date().toLocaleString('th-TH');
+    var msg = '\uD83D\uDD14 ลูกค้าสแกน QR Code แล้ว!\n\u2022 เลขซีเรียลซิม: ' + serial + '\n\u2022 เลขติดตาม: ' + tracking + '\n\u2022 เวลา: ' + now;
+
+    // ส่ง LINE Notify (ต้องใส่ token ใน URL หรือ settings)
+    if (lineToken) {
+      fetch('https://notify-api.line.me/api/notify', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + lineToken,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'message=' + encodeURIComponent(msg)
+      }).catch(function(){});
+    }
+
+    // บันทึก scan event ลง localStorage เพื่อให้แอพ SIM Tracker อ่านได้
+    try {
+      var key = 'sim_scan_' + serial;
+      var event = { serial: serial, tracking: tracking, scannedAt: Date.now() };
+      localStorage.setItem(key, JSON.stringify(event));
+      // เก็บ list ของซิมที่สแกนแล้ว
+      var allScanned = JSON.parse(localStorage.getItem('sim_scanned_list') || '[]');
+      if (!allScanned.find(function(x){ return x.serial === serial; })) {
+        allScanned.push(event);
+        localStorage.setItem('sim_scanned_list', JSON.stringify(allScanned));
+      }
+    } catch(e) {}
+  }
+
+  // เรียกทันทีที่เปิดหน้า (ลูกค้าสแกน QR แล้ว)
+  notifyScanned();
 }
 
 var confirmed = false;
