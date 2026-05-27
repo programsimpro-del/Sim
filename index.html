@@ -61,8 +61,10 @@ var serial = params.get('s') || '';
 var tracking = params.get('t') || '';
 var tgBot = params.get('tgbot') || '';
 var tgChat = params.get('tgchat') || '';
+var simPhone = params.get('phone') || '';
 try { if (tgBot) tgBot = decodeURIComponent(tgBot); } catch(e) {}
 try { if (tgChat) tgChat = decodeURIComponent(tgChat); } catch(e) {}
+try { if (simPhone) simPhone = decodeURIComponent(simPhone); } catch(e) {}
 
 if (!serial) {
   document.getElementById('main').innerHTML = '<div style="color:#f87171;padding:40px 20px;font-size:16px">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
@@ -102,15 +104,32 @@ if (!serial) {
 
   // ===== แจ้งเตือน Telegram ร้านทันทีที่ลูกค้าเปิดหน้า =====
   function notifyScanned() {
+    // ตรวจสอบว่าเคยแจ้งเตือนแล้วหรือยัง (เก็บใน localStorage ของลูกค้า)
+    var notifyKey = 'sim_notified_' + serial;
+    try {
+      if (localStorage.getItem(notifyKey)) {
+        // เคยแจ้งเตือนแล้ว — ไม่ส่งอีก
+        return;
+      }
+    } catch(e) {}
+
     var now = new Date().toLocaleString('th-TH');
-    var msg = '🔔 ลูกค้าสแกน QR Code แล้ว!\n📋 เลขซีเรียลซิม: ' + serial + '\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n\n✅ กรุณาอัปเดตสถานะในแอพ';
+    var phoneInfo = simPhone ? '\n📞 เบอร์โทร: ' + simPhone : '\n📞 เบอร์โทร: รับหลังลงทะเบียนซิม';
+    var msg = '🔔 ลูกค้าสแกน QR Code แล้ว!\n📋 เลขซีเรียลซิม: ' + serial + phoneInfo + '\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n\n✅ กรุณาอัปเดตสถานะในแอพ';
 
     if (tgBot && tgChat) {
       fetch('https://api.telegram.org/bot' + tgBot + '/sendMessage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: tgChat, text: msg })
-      }).catch(function(){});
+      }).then(function(res) {
+        if (res.ok) {
+          // บันทึกว่าแจ้งเตือนแล้ว — จะไม่ส่งอีกต่อไปตลอดกาล
+          try { localStorage.setItem(notifyKey, '1'); } catch(e) {}
+        }
+      }).catch(function(){
+        // ถ้าส่งไม่สำเร็จ ไม่บันทึก — จะลองใหม่ครั้งหน้า
+      });
     }
   }
 
