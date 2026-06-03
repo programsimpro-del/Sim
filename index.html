@@ -103,12 +103,10 @@ if (!serial) {
   })();
 
   // ===== แจ้งเตือน Telegram ร้านทันทีที่ลูกค้าเปิดหน้า =====
-  function sendTelegram(phoneStr) {
-    var notifyKey = 'sim_notified_' + serial;
-    try {
-      if (localStorage.getItem(notifyKey)) return; // แจ้งแล้ว ไม่ส่งซ้ำ
-    } catch(e) {}
+  var FB_BASE = 'https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var simKey = serial.replace(/[.#$[\]]/g, '_');
 
+  function sendTelegram(phoneStr) {
     var now = new Date().toLocaleString('th-TH');
     var phoneInfo = phoneStr ? '\n📞 เบอร์โทร: ' + phoneStr : '\n📞 เบอร์โทร: รับหลังลงทะเบียนซิม';
     var msg = '🔔 ลูกค้าสแกน QR Code แล้ว!\n📋 เลขซีเรียลซิม: ' + serial + phoneInfo + '\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n\n✅ กรุณาอัปเดตสถานะในแอพ';
@@ -120,28 +118,45 @@ if (!serial) {
         body: JSON.stringify({ chat_id: tgChat, text: msg })
       }).then(function(res) {
         if (res.ok) {
-          try { localStorage.setItem(notifyKey, '1'); } catch(e) {}
+          // บันทึกทั้ง localStorage และ Firebase ว่าแจ้งแล้ว
+          try { localStorage.setItem('sim_notified_' + serial, '1'); } catch(e) {}
+          // บันทึก scannedByCustomer = true ใน Firebase ด้วย
+          fetch(FB_BASE + '/sims/' + simKey + '.json', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scannedByCustomer: true, scannedAt: Date.now() })
+          }).catch(function(){});
         }
       }).catch(function(){});
     }
   }
 
   function notifyScanned() {
-    // ถ้า URL มีเบอร์อยู่แล้ว ส่งได้เลย
-    if (simPhone) {
-      sendTelegram(simPhone);
-      return;
-    }
-    // ถ้าไม่มีเบอร์ใน URL → ดึงจาก Firebase
-    var fbUrl = 'https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app/sims/' + serial.replace(/[.#$[\]]/g,'_') + '.json';
-    fetch(fbUrl)
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        var phone = (data && data.phone) ? data.phone : '';
+    // ตรวจ localStorage ก่อน (เร็ว)
+    try {
+      if (localStorage.getItem('sim_notified_' + serial)) return;
+    } catch(e) {}
+
+    // ตรวจ Firebase — ถ้า scannedByCustomer = true แปลว่าแจ้งแล้ว ไม่ส่งซ้ำ
+    fetch(FB_BASE + '/sims/' + simKey + '.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.scannedByCustomer === true) {
+          // เคยแจ้งแล้ว — บันทึก localStorage ไว้ด้วยเพื่อครั้งหน้าจะได้เร็วขึ้น
+          try { localStorage.setItem('sim_notified_' + serial, '1'); } catch(e) {}
+          return; // ไม่ส่งซ้ำ
+        }
+        // ยังไม่เคยแจ้ง — ส่ง Telegram
+        var phone = (data && data.phone) ? data.phone : (simPhone || '');
         sendTelegram(phone);
       })
-      .catch(function(){
-        sendTelegram(''); // Firebase ไม่ตอบ ส่งแบบไม่มีเบอร์
+      .catch(function() {
+        // Firebase ไม่ตอบ — ใช้ localStorage เป็น fallback
+        try {
+          if (!localStorage.getItem('sim_notified_' + serial)) {
+            sendTelegram(simPhone || '');
+          }
+        } catch(e) {}
       });
   }
 
