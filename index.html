@@ -6,29 +6,48 @@
 <title>ลงทะเบียนซิม</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:linear-gradient(160deg,#0a0a1a,#0f172a,#1a0a2e);min-height:100vh;font-family:"Noto Sans Thai",Sarabun,sans-serif;color:white;display:flex;align-items:center;justify-content:center;padding:20px}
-.box{width:100%;max-width:400px}
-.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;margin-bottom:14px}
-.label{color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:8px}
-.inp{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:14px 16px;color:white;font-size:16px;outline:none;font-family:monospace;letter-spacing:1px;transition:border .2s}
+body{background:linear-gradient(160deg,#0d0d1f,#0f172a,#1a0a2e);min-height:100vh;font-family:"Noto Sans Thai",Sarabun,sans-serif;color:white;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 40px}
+.box{width:100%;max-width:420px}
+.top-icon{text-align:center;margin-bottom:10px;font-size:44px}
+.top-title{text-align:center;font-size:22px;font-weight:900;margin-bottom:8px}
+.track-badge{display:inline-block;background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.5);color:#a78bfa;border-radius:99px;padding:5px 18px;font-size:13px;font-weight:700;margin-bottom:18px}
+.track-wrap{text-align:center}
+/* Barcode box */
+.barcode-box{background:white;border-radius:16px;padding:16px 20px 12px;margin-bottom:16px;text-align:center}
+.barcode-svg{width:100%;height:70px}
+.barcode-num{color:#1a1a2e;font-size:15px;font-weight:800;margin-top:6px;font-family:monospace;letter-spacing:2px}
+/* Step card */
+.step-card{background:rgba(99,102,241,0.12);border:1.5px solid rgba(99,102,241,0.35);border-radius:18px;padding:18px;margin-bottom:14px}
+.step-label{color:#a78bfa;font-size:13px;font-weight:700;text-align:center;margin-bottom:12px}
+.serial-display{font-size:32px;font-weight:900;font-family:monospace;letter-spacing:3px;word-break:break-all;text-align:center;padding:16px 12px;background:rgba(99,102,241,0.15);border:2px solid #6366f1;border-radius:12px;color:white;margin-bottom:10px}
+.hint{text-align:center;color:#a78bfa;font-size:12px;margin-top:2px}
+/* Buttons */
+.btn-copy{width:100%;padding:17px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;background:linear-gradient(135deg,#059669,#10b981);color:white;transition:opacity .15s;display:block;text-align:center}
+.btn-copy:active{opacity:.8}
+.btn-reg{width:100%;padding:17px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#e53e3e,#dc2626);color:white;transition:opacity .15s;display:block;text-align:center;text-decoration:none;margin-bottom:10px}
+.btn-reg:active{opacity:.8}
+.btn-reg:disabled{opacity:.35;cursor:not-allowed}
+.copy-confirm{text-align:center;color:#6ee7b7;font-size:13px;font-weight:700;margin-bottom:10px;display:none}
+/* Network selector */
+.net-label{color:#94a3b8;font-size:12px;font-weight:700;margin-bottom:10px;text-align:center}
+.net-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.net-btn{padding:14px 8px;border:2px solid rgba(255,255,255,0.12);border-radius:14px;background:rgba(255,255,255,0.04);color:#8b8fa8;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s}
+.net-btn.sel{color:white}
+.net-btn:disabled{opacity:.3;cursor:not-allowed}
+.net-logo{width:38px;height:38px;object-fit:contain;background:white;border-radius:8px;padding:4px;display:block;margin:0 auto 5px}
+.net-emoji{font-size:30px;display:block;margin-bottom:5px}
+/* Step 1 input */
+.inp-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:20px;margin-bottom:14px}
+.inp{width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;padding:14px 16px;color:white;font-size:16px;outline:none;font-family:monospace;letter-spacing:1px;transition:border .2s;margin-bottom:10px}
 .inp:focus{border-color:#a78bfa}
 .inp.err{border-color:#f87171}
 .inp.ok{border-color:#6ee7b7}
-.btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:all .15s;text-align:center;text-decoration:none}
-.btn:active{opacity:.75}
-.btn:disabled{opacity:.35;cursor:not-allowed}
-.btn-scan{background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.4);color:#a78bfa;font-size:14px}
-.btn-ghost{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;font-size:14px}
-.serial-big{font-size:28px;font-weight:900;letter-spacing:3px;font-family:monospace;word-break:break-all;text-align:center;padding:18px;border-radius:14px;margin:12px 0}
-.net-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.net-btn{padding:14px 8px;border:2px solid rgba(255,255,255,0.12);border-radius:14px;background:rgba(255,255,255,0.04);color:#8b8fa8;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s}
-.net-btn.active{color:white}
-.net-btn:disabled{opacity:.3;cursor:not-allowed}
-.net-logo{width:40px;height:40px;object-fit:contain;background:white;border-radius:8px;padding:4px;display:block;margin:0 auto 6px}
-.net-emoji{font-size:32px;display:block;margin-bottom:6px}
-.msg-err{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:10px;padding:10px 14px;font-size:13px;margin-top:8px}
-.warn{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px;color:#fbbf24;font-size:12px;line-height:1.9}
-.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top:3px solid #a78bfa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+.btn-scan{width:100%;padding:14px;border:1.5px solid rgba(167,139,250,0.45);border-radius:12px;background:rgba(167,139,250,0.12);color:#a78bfa;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px}
+.btn-check{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;margin-bottom:12px}
+.btn-check:disabled{opacity:.35}
+.msg-err{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:10px;display:none}
+.warn{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px;color:#fbbf24;font-size:12px;line-height:1.9;margin-bottom:14px}
+.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top:3px solid #a78bfa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .cam-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px;display:none}
 video{width:100%;display:block}
@@ -38,13 +57,15 @@ video{width:100%;display:block}
 .cc-tr{top:10px;right:10px;border-width:3px 3px 0 0}
 .cc-bl{bottom:10px;left:10px;border-width:0 0 3px 3px}
 .cc-br{bottom:10px;right:10px;border-width:0 3px 3px 0}
-.copied-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:10px 24px;border-radius:99px;font-size:14px;font-weight:700;z-index:999;animation:fadeIn .2s}
-@keyframes fadeIn{from{opacity:0;top:10px}to{opacity:1;top:20px}}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid rgba(255,255,255,0.15);color:white;padding:12px 28px;border-radius:99px;font-size:14px;font-weight:700;z-index:999;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,0.4)}
 </style>
 </head>
 <body>
 <div class="box" id="app">
-  <div style="text-align:center;padding:60px 0"><div class="spin"></div><div style="color:#8b8fa8">กำลังโหลด...</div></div>
+  <div style="text-align:center;padding:80px 0">
+    <div class="spin"></div>
+    <div style="color:#8b8fa8;font-size:14px">กำลังโหลด...</div>
+  </div>
 </div>
 
 <script>
@@ -57,25 +78,45 @@ const NET_DEF={
 };
 let netCfg={};
 let currentSim=null;
+let simPath="";
 let selectedNet=null;
+let tgDone=false;
 
-function getP(k){return new URLSearchParams(location.search).get(k)||"";}
-const tgbot=getP("tgbot"),tgchat=getP("tgchat");
+function P(k){return new URLSearchParams(location.search).get(k)||"";}
+const tgbot=P("tgbot"),tgchat=P("tgchat");
 const app=document.getElementById("app");
 
 function tgSend(text){
-  if(!tgbot||!tgchat)return Promise.resolve();
-  return fetch("https://api.telegram.org/bot"+tgbot+"/sendMessage",{
+  if(!tgbot||!tgchat||tgDone)return;
+  tgDone=true;
+  fetch("https://api.telegram.org/bot"+tgbot+"/sendMessage",{
     method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({chat_id:tgchat,text})
+    body:JSON.stringify({chat_id:tgchat,text,parse_mode:"HTML"})
   }).catch(()=>{});
 }
 function toKey(s){return String(s).replace(/[.#$[\]\/]/g,"_");}
 function fbGet(p){return fetch(FB+p+".json").then(r=>r.json());}
 function fbPatch(p,d){return fetch(FB+p+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});}
-function getNet(code){return{...( NET_DEF[code]||NET_DEF.K),...(netCfg[code]||{})};}
+function getNet(code){return{...(NET_DEF[code]||NET_DEF.K),...(netCfg[code]||{})};}
 
-// โหลด net config จาก Firebase
+// สร้าง barcode SVG แบบง่าย
+function makeBarcodeHTML(text){
+  const W=320,H=70,q=8;
+  let bars=[];
+  let x=q;
+  // สร้าง pattern จาก charCode
+  for(let i=0;i<text.length;i++){
+    const c=text.charCodeAt(i);
+    const w1=2+(c%3),w2=1+(c%2),w3=3+(c%4),w4=1+(c%3);
+    bars.push(`<rect x="${x}" y="0" width="${w1}" height="${H}" fill="#000"/>`);x+=w1+w2;
+    bars.push(`<rect x="${x}" y="0" width="${w3}" height="${H}" fill="#000"/>`);x+=w3+w4;
+  }
+  // guard bars
+  bars.unshift(`<rect x="${q-4}" y="0" width="2" height="${H}" fill="#000"/><rect x="${q-1}" y="0" width="1" height="${H}" fill="#000"/>`);
+  bars.push(`<rect x="${x+1}" y="0" width="2" height="${H}" fill="#000"/><rect x="${x+4}" y="0" width="1" height="${H}" fill="#000"/>`);
+  return`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:70px">${bars.join("")}</svg>`;
+}
+
 async function init(){
   try{
     const d=await fbGet("/net_config");
@@ -86,19 +127,17 @@ async function init(){
   renderStep1();
 }
 
-// ===================== STEP 1: กรอก Serial =====================
+// ===== STEP 1: กรอก Serial =====
 let camOn=false,codeReader=null,camStream=null;
 
 function renderStep1(){
   app.innerHTML=`
-    <div style="text-align:center;margin-bottom:20px">
-      <div style="font-size:48px;margin-bottom:8px">📱</div>
-      <div style="font-size:20px;font-weight:800">ลงทะเบียนซิม</div>
-      <div style="color:#8b8fa8;font-size:13px;margin-top:4px">กรอกหรือสแกนเลขซีเรียลบนซองซิม</div>
-    </div>
+    <div class="top-icon">📱</div>
+    <div class="top-title">ลงทะเบียนซิม</div>
+    <div class="track-wrap"><span class="track-badge">กรอกหรือสแกนเลขซีเรียล</span></div>
+    <div style="height:16px"></div>
 
-    <div class="card">
-      <div class="label">📋 เลขซีเรียลซิม</div>
+    <div class="inp-card">
       <div class="cam-wrap" id="cam-wrap">
         <video id="cam-video" playsinline muted></video>
         <div class="cam-line"></div>
@@ -106,17 +145,13 @@ function renderStep1(){
         <div class="cc cc-bl"></div><div class="cc cc-br"></div>
       </div>
       <div id="cam-msg" style="display:none;font-size:12px;text-align:center;color:#a78bfa;margin-bottom:8px;padding:6px;background:rgba(99,102,241,0.1);border-radius:8px"></div>
-      <button class="btn btn-scan" id="cam-btn" onclick="toggleCam()" style="margin-bottom:10px">📷 สแกนบาร์โค้ดซีเรียล</button>
+      <button class="btn-scan" id="cam-btn" onclick="toggleCam()">📷 สแกนบาร์โค้ดซีเรียลซิม</button>
       <input id="serial-inp" class="inp" type="text" placeholder="หรือกรอกเลขซีเรียลเอง"
         autocomplete="off" spellcheck="false"
         oninput="onInp()" onkeydown="if(event.key==='Enter')doCheck()"/>
-      <div id="inp-msg" style="display:none" class="msg-err"></div>
+      <div id="inp-msg" class="msg-err"></div>
+      <button class="btn-check" id="check-btn" onclick="doCheck()" disabled>ตรวจสอบ →</button>
     </div>
-
-    <button class="btn" id="check-btn" onclick="doCheck()" disabled
-      style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white">
-      ตรวจสอบเลขซีเรียล →
-    </button>
 
     <div class="warn">
       ⚠️ กรอกเลขซีเรียลให้ถูกต้องครบถ้วน<br/>
@@ -135,28 +170,22 @@ function onInp(){
 
 async function toggleCam(){
   if(camOn){stopCam();return;}
-  const wrap=document.getElementById("cam-wrap");
-  const msg=document.getElementById("cam-msg");
-  const btn=document.getElementById("cam-btn");
+  const wrap=document.getElementById("cam-wrap"),msg=document.getElementById("cam-msg"),btn=document.getElementById("cam-btn");
   try{
     camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
     const video=document.getElementById("cam-video");
     video.srcObject=camStream;await video.play();
     wrap.style.display="block";
-    msg.style.display="block";msg.textContent="🔍 ชี้กล้องที่บาร์โค้ดบนซองซิม...";
-    btn.textContent="🔴 ปิดกล้อง";
-    btn.style.cssText="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:14px;padding:15px;font-size:14px;font-weight:800;width:100%;cursor:pointer;margin-bottom:10px";
+    msg.style.display="block";msg.style.color="#a78bfa";msg.textContent="🔍 ชี้กล้องที่บาร์โค้ดบนซองซิม...";
+    btn.textContent="🔴 ปิดกล้อง";btn.style.borderColor="rgba(239,68,68,0.4)";btn.style.color="#f87171";btn.style.background="rgba(239,68,68,0.12)";
     camOn=true;
-    await loadZXing();
+    await new Promise((res,rej)=>{if(window.ZXing){res();return;}const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.18.6/index.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s);});
     const hints=new Map();
-    hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS,[
-      window.ZXing.BarcodeFormat.CODE_128,window.ZXing.BarcodeFormat.CODE_39,
-      window.ZXing.BarcodeFormat.EAN_13,window.ZXing.BarcodeFormat.QR_CODE]);
+    hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS,[window.ZXing.BarcodeFormat.CODE_128,window.ZXing.BarcodeFormat.CODE_39,window.ZXing.BarcodeFormat.EAN_13,window.ZXing.BarcodeFormat.QR_CODE]);
     hints.set(window.ZXing.DecodeHintType.TRY_HARDER,true);
     codeReader=new window.ZXing.BrowserMultiFormatReader(hints);
     codeReader.decodeFromVideoElement(video,result=>{
-      if(result){
-        const txt=result.getText().trim();
+      if(result){const txt=result.getText().trim();
         if(txt.length>=5){
           document.getElementById("serial-inp").value=txt;
           document.getElementById("serial-inp").className="inp ok";
@@ -166,28 +195,15 @@ async function toggleCam(){
         }
       }
     });
-  }catch(e){
-    const m=document.getElementById("cam-msg");
-    if(m){m.style.display="block";m.style.color="#f87171";m.textContent="❌ เปิดกล้องไม่ได้: "+e.message;}
-  }
+  }catch(e){const m=document.getElementById("cam-msg");if(m){m.style.display="block";m.style.color="#f87171";m.textContent="❌ เปิดกล้องไม่ได้";}}
 }
-
-function loadZXing(){
-  return new Promise((res,rej)=>{
-    if(window.ZXing){res();return;}
-    const s=document.createElement("script");
-    s.src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.18.6/index.min.js";
-    s.onload=res;s.onerror=rej;document.head.appendChild(s);
-  });
-}
-
 function stopCam(){
   if(codeReader){try{codeReader.reset();}catch(e){}codeReader=null;}
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   const v=document.getElementById("cam-video");if(v)v.srcObject=null;
   const w=document.getElementById("cam-wrap");if(w)w.style.display="none";
   const b=document.getElementById("cam-btn");
-  if(b){b.textContent="📷 สแกนบาร์โค้ดซีเรียล";b.style.cssText="";}
+  if(b){b.textContent="📷 สแกนบาร์โค้ดซีเรียลซิม";b.style.cssText="";}
   camOn=false;
 }
 
@@ -205,75 +221,72 @@ async function doCheck(){
       fbGet("/sims_free/"+toKey(serial)).catch(()=>null),
     ]);
     const sim=[d1,d2,d3].find(d=>d&&d.serial)||null;
-    const simPath=d1&&d1.serial?"/sims":d2&&d2.serial?"/sims_plain":"/sims_free";
+    simPath=d1&&d1.serial?"/sims":d2&&d2.serial?"/sims_plain":"/sims_free";
 
-    if(!sim){
-      showInpErr("ไม่พบเลขซีเรียลนี้ในระบบ กรุณาตรวจสอบและลองใหม่");
-      btn.disabled=false;btn.textContent="ตรวจสอบเลขซีเรียล →";return;
-    }
-    if(sim.scannedByCustomer){
-      showInpErr("ซิมเลขนี้ได้รับการลงทะเบียนแล้ว หากมีปัญหากรุณาติดต่อร้านค้า");
-      btn.disabled=false;btn.textContent="ตรวจสอบเลขซีเรียล →";return;
-    }
+    if(!sim){showErr("ไม่พบเลขซีเรียลนี้ในระบบ กรุณาตรวจสอบและลองใหม่");btn.disabled=false;btn.textContent="ตรวจสอบ →";return;}
+    if(sim.scannedByCustomer){showErr("ซิมเลขนี้ได้รับการลงทะเบียนแล้ว หากมีปัญหากรุณาติดต่อร้านค้า");btn.disabled=false;btn.textContent="ตรวจสอบ →";return;}
 
-    currentSim={...sim,_path:simPath};
+    currentSim=sim;
     renderStep2();
-  }catch(e){
-    showInpErr("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-    btn.disabled=false;btn.textContent="ตรวจสอบเลขซีเรียล →";
-  }
+  }catch(e){showErr("เกิดข้อผิดพลาด กรุณาลองใหม่");btn.disabled=false;btn.textContent="ตรวจสอบ →";}
 }
-
-function showInpErr(msg){
-  const el=document.getElementById("inp-msg");
-  const inp=document.getElementById("serial-inp");
+function showErr(msg){
+  const el=document.getElementById("inp-msg"),inp=document.getElementById("serial-inp");
   if(el){el.style.display="block";el.textContent="❌ "+msg;}
   if(inp)inp.className="inp err";
 }
 
-// ===================== STEP 2: แสดง Serial + เลือกเครือข่าย =====================
+// ===== STEP 2: แสดงผล =====
 function renderStep2(){
   const sim=currentSim;
+  const code=sim.simCode||"K";
+  selectedNet=code;
+  const net=getNet(code);
+  const col=net.color||"#4f46e5";
 
-  // สร้าง grid เครือข่าย
-  const netBtns=Object.keys(NET_DEF).map(code=>{
-    const n=getNet(code);
-    const logoHTML=n.logo
-      ?`<img src="${n.logo}" class="net-logo"/>`
-      :`<span class="net-emoji">${n.emoji}</span>`;
-    return`<button class="net-btn" id="net-${code}" onclick="selectNet('${code}')" ${!n.url?"disabled title='ยังไม่มีลิงก์ลงทะเบียน'":""}>
-      ${logoHTML}
-      <span>${n.label}</span>
+  // เครือข่าย grid
+  const netBtns=Object.entries(NET_DEF).map(([k,n])=>{
+    const cfg=getNet(k);
+    const logo=cfg.logo?`<img src="${cfg.logo}" class="net-logo"/>`:`<span class="net-emoji">${cfg.emoji}</span>`;
+    const isSel=k===code;
+    const selStyle=isSel?`border-color:${cfg.color};background:${cfg.color}22;color:white`:""
+    return`<button class="net-btn${isSel?" sel":""}" id="nb-${k}" style="${selStyle}" onclick="pickNet('${k}')" ${!cfg.url?"disabled":""}>
+      ${logo}${cfg.label}
     </button>`;
   }).join("");
 
   app.innerHTML=`
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:40px;margin-bottom:6px">✅</div>
-      <div style="font-size:18px;font-weight:800">พบซิมของคุณแล้ว!</div>
-      <div style="color:#8b8fa8;font-size:12px;margin-top:4px">คัดลอกเลขซีเรียลแล้วเลือกเครือข่ายเพื่อลงทะเบียน</div>
+    <div class="top-icon">📱</div>
+    <div class="top-title">รับเลขซีเรียลซิมของคุณ</div>
+    <div class="track-wrap"><span class="track-badge">เลขติดตามซิม: ${sim.trackingNo}</span></div>
+    <div style="height:16px"></div>
+
+    <!-- Barcode -->
+    <div class="barcode-box">
+      ${makeBarcodeHTML(sim.serial)}
+      <div class="barcode-num">${sim.serial}</div>
     </div>
 
-    <div class="card">
-      <div class="label">📋 เลขซีเรียลซิมของคุณ</div>
-      <div class="serial-big" id="serial-box"
-        style="background:rgba(99,102,241,0.15);border:2px solid rgba(99,102,241,0.4);color:#a78bfa">
-        ${sim.serial}
-      </div>
-      <button class="btn btn-ghost" id="copy-btn" onclick="copySerial()">
-        📋 คัดลอกเลขซีเรียล
-      </button>
+    <!-- Serial display -->
+    <div class="step-card">
+      <div class="step-label">ขั้นตอนที่ 1 — เลขซีเรียลซิมของคุณ</div>
+      <div class="serial-display" id="ser-disp" style="border-color:${col};color:${col}">${sim.serial}</div>
+      <div class="hint">👆 กดปุ่มสีม่วงด้านล่างเพื่อคัดลอกอัตโนมัติ</div>
     </div>
 
-    <div class="card">
-      <div class="label">📶 เลือกเครือข่ายของคุณ</div>
-      <div style="color:#8b8fa8;font-size:11px;margin-bottom:12px">เลือกให้ตรงกับซิมที่ซื้อมา</div>
+    <!-- Copy button -->
+    <button class="btn-copy" id="copy-btn" onclick="doCopy()">📋 คัดลอกเลขซีเรียลซิม</button>
+    <div class="copy-confirm" id="copy-ok">✅ คัดลอกเลขซีเรียลแล้ว — กดไปแจ้งเพื่อลงทะเบียนได้เลย</div>
+
+    <!-- เลือกเครือข่าย -->
+    <div class="inp-card" id="net-section">
+      <div class="net-label">📶 เลือกเครือข่ายที่จะลงทะเบียน</div>
       <div class="net-grid">${netBtns}</div>
-      <div id="net-msg" style="display:none;font-size:12px;color:#f59e0b;margin-bottom:8px">⚠️ กรุณาเลือกเครือข่ายก่อน</div>
-      <button class="btn" id="reg-btn" onclick="doRegister()" disabled
-        style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#8b8fa8">
-        🔗 ลงทะเบียนซิม
-      </button>
+      <div id="net-warn" style="display:none;color:#f59e0b;font-size:12px;text-align:center;margin-bottom:8px">⚠️ กรุณาเลือกเครือข่ายก่อน</div>
+      <a class="btn-reg" id="reg-btn" href="#" onclick="doReg(event)"
+        style="background:${col}">
+        ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (${net.label})
+      </a>
     </div>
 
     <div class="warn">
@@ -282,93 +295,62 @@ function renderStep2(){
       🚫 หยุดบริการวันอาทิตย์และวันหยุดนักขัตฤกษ์
     </div>
   `;
-
-  // ถ้าซิมมี simCode อยู่แล้ว เลือกให้เลย
-  if(sim.simCode&&NET_DEF[sim.simCode]){
-    selectNet(sim.simCode);
-  }
 }
 
-function selectNet(code){
+function pickNet(code){
   selectedNet=code;
   const net=getNet(code);
   const col=net.color||"#4f46e5";
 
-  // reset ทุกปุ่ม
+  // reset ปุ่มเครือข่าย
   Object.keys(NET_DEF).forEach(k=>{
-    const b=document.getElementById("net-"+k);
-    if(!b)return;
-    b.className="net-btn";
-    b.style.borderColor="rgba(255,255,255,0.12)";
-    b.style.background="rgba(255,255,255,0.04)";
-    b.style.color="#8b8fa8";
+    const b=document.getElementById("nb-"+k);if(!b)return;
+    b.className="net-btn";b.style.cssText="";
   });
-  // highlight ที่เลือก
-  const sel=document.getElementById("net-"+code);
-  if(sel){
-    sel.className="net-btn active";
-    sel.style.borderColor=col;
-    sel.style.background=col+"22";
-    sel.style.color="white";
-  }
-  // อัปเดต serial box สี
-  const sb=document.getElementById("serial-box");
-  if(sb){
-    sb.style.background=col+"22";
-    sb.style.borderColor=col+"66";
-    sb.style.color=col;
-  }
-  // อัปเดตปุ่มลงทะเบียน
+  // highlight
+  const sel=document.getElementById("nb-"+code);
+  if(sel){sel.className="net-btn sel";sel.style.borderColor=col;sel.style.background=col+"22";sel.style.color="white";}
+  // อัปเดตสี serial
+  const sd=document.getElementById("ser-disp");if(sd){sd.style.borderColor=col;sd.style.color=col;}
+  // อัปเดตปุ่ม reg
   const rb=document.getElementById("reg-btn");
   if(rb){
-    if(net.url){
-      rb.disabled=false;
-      rb.style.cssText=`background:${col};color:white;border:none`;
-      rb.textContent=`ลงทะเบียนซิม ${net.label} →`;
-    }else{
-      rb.disabled=true;
-      rb.style.cssText="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#8b8fa8";
-      rb.textContent="⚠️ ยังไม่มีลิงก์ลงทะเบียน";
-    }
+    if(net.url){rb.style.background=col;rb.style.opacity="1";rb.textContent="ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม ("+net.label+")";}
+    else{rb.style.background="#374151";rb.style.opacity="0.5";rb.textContent="⚠️ ยังไม่มีลิงก์ลงทะเบียน";}
   }
-  document.getElementById("net-msg").style.display="none";
+  document.getElementById("net-warn").style.display="none";
 }
 
-function copySerial(){
-  const sim=currentSim;
-  if(!sim)return;
-  navigator.clipboard?.writeText(sim.serial).then(()=>{
+function doCopy(){
+  if(!currentSim)return;
+  const serial=currentSim.serial;
+  const doIt=()=>{
     const btn=document.getElementById("copy-btn");
-    if(btn){btn.textContent="✅ คัดลอกแล้ว!";btn.style.color="#6ee7b7";btn.style.borderColor="rgba(110,231,183,0.4)";}
-    // toast
-    const t=document.createElement("div");
-    t.className="copied-toast";t.textContent="✅ คัดลอกเลขซีเรียลแล้ว";
-    document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
-    setTimeout(()=>{
-      const b=document.getElementById("copy-btn");
-      if(b){b.textContent="📋 คัดลอกเลขซีเรียล";b.style.color="";b.style.borderColor="";}
-    },2500);
-  }).catch(()=>{
-    // fallback
-    const ta=document.createElement("textarea");
-    ta.value=sim.serial;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();
-    const btn=document.getElementById("copy-btn");
-    if(btn)btn.textContent="✅ คัดลอกแล้ว!";
-  });
+    const ok=document.getElementById("copy-ok");
+    if(btn){btn.textContent="✅ คัดลอกเลขซีเรียลแล้ว!";btn.style.background="linear-gradient(135deg,#047857,#059669)";}
+    if(ok)ok.style.display="block";
+    showToast("คัดลอกไปยังคลิปบอร์ดแล้ว");
+  };
+  if(navigator.clipboard){navigator.clipboard.writeText(serial).then(doIt).catch(doIt);}
+  else{
+    const ta=document.createElement("textarea");ta.value=serial;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();doIt();
+  }
 }
 
-async function doRegister(){
-  if(!selectedNet){document.getElementById("net-msg").style.display="block";return;}
+async function doReg(e){
+  e.preventDefault();
+  if(!selectedNet){document.getElementById("net-warn").style.display="block";return;}
   const net=getNet(selectedNet);
-  if(!net.url)return;
+  if(!net.url){document.getElementById("net-warn").style.display="block";document.getElementById("net-warn").textContent="⚠️ ยังไม่มีลิงก์ลงทะเบียน กรุณาติดต่อร้านค้า";return;}
+
   const sim=currentSim;
   const now=Date.now();
 
   // คัดลอก serial อัตโนมัติ
-  navigator.clipboard?.writeText(sim.serial).catch(()=>{});
+  if(navigator.clipboard){navigator.clipboard.writeText(sim.serial).catch(()=>{});}
 
   // บันทึก Firebase
-  fbPatch(sim._path+"/"+toKey(sim.serial),{scannedByCustomer:true,scannedAt:now}).catch(()=>{});
+  fbPatch(simPath+"/"+toKey(sim.serial),{scannedByCustomer:true,scannedAt:now}).catch(()=>{});
 
   // แจ้ง Telegram
   tgSend(
@@ -381,13 +363,14 @@ async function doRegister(){
     "✅ ระบบอัปเดตสถานะอัตโนมัติแล้ว"
   );
 
-  // toast แจ้งก่อน redirect
-  const t=document.createElement("div");
-  t.className="copied-toast";
-  t.textContent="✅ คัดลอกเลขซีเรียลแล้ว กำลังไปหน้าลงทะเบียน...";
-  document.body.appendChild(t);
+  showToast("✅ คัดลอกเลขซีเรียลแล้ว — กำลังไปหน้าลงทะเบียน...");
+  setTimeout(()=>{window.open(net.url,"_blank");},600);
+}
 
-  setTimeout(()=>{window.open(net.url,"_blank");t.remove();},800);
+function showToast(msg){
+  const old=document.querySelector(".toast");if(old)old.remove();
+  const t=document.createElement("div");t.className="toast";t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
 
 init();
