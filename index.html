@@ -290,14 +290,30 @@ async function autoLoad(serial){
     <div style="color:#a5b4fc;font-weight:700;font-size:15px;margin-bottom:6px">กำลังดึงข้อมูลซิม...</div>
     <div style="color:#6b7280;font-size:13px;font-family:monospace">${serial}</div>
   </div>`);
+
+  // ดึง param จาก URL ที่ฝังมากับ QR Code
+  const urlTracking=P("t")||P("tracking")||"";
+  const urlPhone=P("phone")||"";
+  const urlNet=P("net")||"";
+
   try{
     const to=t=>new Promise((_,r)=>setTimeout(r,t));
     const g=p=>Promise.race([fbGet(p).catch(()=>null),to(6000).then(()=>null)]);
     const [d1,d2,d3]=await Promise.all([g("/sims/"+toKey(serial)),g("/sims_plain/"+toKey(serial)),g("/sims_free/"+toKey(serial))]);
     const sim=[d1,d2,d3].find(d=>d&&d.serial)||null;
     SPATH=d1?.serial?"/sims":d2?.serial?"/sims_plain":d3?.serial?"/sims_free":"/sims";
-    SIM=sim||{serial,trackingNo:"",simCode:"K",phone:""};
-  }catch(e){SIM={serial,trackingNo:"",simCode:"K",phone:""};SPATH="/sims";}
+    // merge ข้อมูลจาก URL เข้ากับข้อมูล Firebase (URL มีความน่าเชื่อถือสูงเพราะร้านเป็นคนสร้าง)
+    SIM={
+      serial,
+      trackingNo:sim?.trackingNo||urlTracking||"",
+      simCode:sim?.simCode||urlNet||"K",
+      phone:sim?.phone||urlPhone||"",
+      ...(sim||{})
+    };
+  }catch(e){
+    SIM={serial,trackingNo:urlTracking,simCode:urlNet||"K",phone:urlPhone};
+    SPATH="/sims";
+  }
   showResult();
 }
 
