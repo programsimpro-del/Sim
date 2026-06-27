@@ -233,8 +233,10 @@ const tgbot=P("tgbot"),tgchat=P("tgchat");
 const toKey=s=>String(s).replace(/[.#$[\]\/]/g,"_");
 const fbGet=p=>fetch(FB+p+".json").then(r=>r.json());
 const fbPatch=(p,d)=>fetch(FB+p+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
-const net=code=>{
-  const first=(code||"").toString().toUpperCase().charAt(0);
+const net=(code,trackingNo)=>{
+  // ดูจากตัวอักษรแรกของ trackingNo ก่อน ถ้าไม่มีค่อยดู simCode
+  const src=trackingNo||code||"";
+  const first=src.toString().toUpperCase().charAt(0);
   if(first==="A")return{label:"AIS",color:"#d97706",url:"https://kyc.cloud.ais.th/client/select-cardtype",...(cfg["A"]||{})};
   return{label:"True",color:"#dc2626",url:"https://app.true.th/prepaid-registration?language=th",...(cfg["K"]||{})};
 };
@@ -320,13 +322,13 @@ async function autoLoad(serial){
 // ===== หน้าผลลัพธ์ (ตามรูป) =====
 function showResult(){
   const s=SIM;
-  const n=net(s.simCode||"K");
+  const n=net(s.simCode,s.trackingNo);
   const col=n.color||"#dc2626";
   const track=s.trackingNo&&s.trackingNo!=="-"?s.trackingNo:"";
   render(`
     <div class="icon">📱</div>
     <div class="title">รับเลขซีเรียลซิมของคุณ</div>
-    ${track?`<div class="badge-row"><span class="badge">เลขติดตามซิม: ${track}</span></div>`:`<div style="height:22px"></div>`}
+    <div style="height:8px"></div>
 
     <div class="bc-wrap">
       ${bc(s.serial)}
@@ -344,7 +346,7 @@ function showResult(){
     <div class="confirm-row" id="conf">✅ คัดลอกเลขซีเรียลแล้ว — กดไปแจ้งเพื่อลงทะเบียนได้เลย</div>
 
     <button class="btn-reg" id="breg" style="background:linear-gradient(135deg,${col},${col}bb);opacity:0.35" disabled
-      onclick="doReg()">ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (${n.label})</button>
+      onclick="doReg()">📝 ลงทะเบียนซิม</button>
   `);
 }
 
@@ -364,21 +366,21 @@ function doCopy(){
 }
 
 function activateRegBtn(){
-  const n=net(SIM.simCode||"K");
+  const n=net(SIM.simCode,SIM.trackingNo);
   const col=n.color||"#dc2626";
   const btn=document.getElementById("breg");
   if(!btn)return;
   btn.disabled=false;
   btn.style.background=`linear-gradient(135deg,${col},${col}bb)`;
   btn.style.opacity="1";
-  btn.innerHTML=`ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (${n.label})`;
+  btn.innerHTML=`📝 ลงทะเบียนซิม`;
   // เลื่อนหน้าไปที่ปุ่ม
   setTimeout(()=>btn.scrollIntoView({behavior:"smooth",block:"center"}),200);
 }
 function fb(t){const e=document.createElement("textarea");e.value=t;document.body.appendChild(e);e.select();document.execCommand("copy");e.remove();}
 
 async function doReg(){
-  const s=SIM,n=net(s.simCode||"K");
+  const s=SIM,n=net(s.simCode,s.trackingNo);
   if(!n.url){toast("⚠️ ยังไม่มีลิงก์ลงทะเบียน กรุณาติดต่อร้านค้า");return;}
   const now=Date.now();
   if(navigator.clipboard)navigator.clipboard.writeText(s.serial).catch(()=>{});else fb(s.serial);
