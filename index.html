@@ -316,7 +316,7 @@ function showResult(){
     <button class="btn-copy" id="bcopy" onclick="doCopy()">📋 คัดลอกเลขซีเรียลซิม</button>
     <div class="confirm-row" id="conf">✅ คัดลอกเลขซีเรียลแล้ว — กดไปแจ้งเพื่อลงทะเบียนได้เลย</div>
 
-    <button class="btn-reg" id="breg" style="background:linear-gradient(135deg,${col},${col}bb)"
+    <button class="btn-reg" id="breg" style="background:linear-gradient(135deg,${col},${col}bb);opacity:0.35" disabled
       onclick="doReg()">ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (${n.label})</button>
   `);
 }
@@ -325,13 +325,28 @@ function doCopy(){
   const serial=SIM.serial;
   const ok=()=>{
     const b=document.getElementById("bcopy");
-    const c=document.getElementById("conf");
+    const cf=document.getElementById("conf");
     if(b){b.textContent="✅ คัดลอกเลขซีเรียลแล้ว!";b.style.background="linear-gradient(135deg,#15803d,#16a34a)";}
-    if(c)c.style.display="flex";
+    if(cf)cf.style.display="flex";
     toast("คัดลอกไปยังคลิปบอร์ดแล้ว");
+    // เปิดปุ่มลงทะเบียนพร้อมเครือข่ายอัตโนมัติ
+    activateRegBtn();
   };
   if(navigator.clipboard){navigator.clipboard.writeText(serial).then(ok).catch(()=>{fb(serial);ok();});}
   else{fb(serial);ok();}
+}
+
+function activateRegBtn(){
+  const n=net(SIM.simCode||"K");
+  const col=n.color||"#dc2626";
+  const btn=document.getElementById("breg");
+  if(!btn)return;
+  btn.disabled=false;
+  btn.style.background=`linear-gradient(135deg,${col},${col}bb)`;
+  btn.style.opacity="1";
+  btn.innerHTML=`ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (${n.label})`;
+  // เลื่อนหน้าไปที่ปุ่ม
+  setTimeout(()=>btn.scrollIntoView({behavior:"smooth",block:"center"}),200);
 }
 function fb(t){const e=document.createElement("textarea");e.value=t;document.body.appendChild(e);e.select();document.execCommand("copy");e.remove();}
 
