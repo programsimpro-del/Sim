@@ -216,10 +216,16 @@ body{
 const FB="https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
 const NETS={
   K:{label:"True",color:"#dc2626",url:"https://app.true.th/prepaid-registration?language=th"},
-  L:{label:"True",color:"#4f46e5",url:"https://app.true.th/prepaid-registration?language=th"},
+  L:{label:"True",color:"#dc2626",url:"https://app.true.th/prepaid-registration?language=th"},
   A:{label:"AIS",color:"#d97706",url:"https://kyc.cloud.ais.th/client/select-cardtype"},
-  D:{label:"DTAC",color:"#0891b2",url:""},
+  D:{label:"True",color:"#dc2626",url:"https://app.true.th/prepaid-registration?language=th"},
 };
+// ตัดสินใจจากตัวอักษรแรกของ simCode
+function resolveNet(code){
+  const first=(code||"").toString().toUpperCase().charAt(0);
+  if(first==="A")return{label:"AIS",color:"#d97706",url:"https://kyc.cloud.ais.th/client/select-cardtype",...(cfg["A"]||{})};
+  return{label:"True",color:"#dc2626",url:"https://app.true.th/prepaid-registration?language=th",...(cfg["K"]||{})};
+}
 let cfg={},SIM=null,SPATH="",tgSent=false;
 
 const P=k=>new URLSearchParams(location.search).get(k)||"";
@@ -227,7 +233,11 @@ const tgbot=P("tgbot"),tgchat=P("tgchat");
 const toKey=s=>String(s).replace(/[.#$[\]\/]/g,"_");
 const fbGet=p=>fetch(FB+p+".json").then(r=>r.json());
 const fbPatch=(p,d)=>fetch(FB+p+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
-const net=code=>({...(NETS[code]||NETS.K),...(cfg[code]||{})});
+const net=code=>{
+  const first=(code||"").toString().toUpperCase().charAt(0);
+  if(first==="A")return{label:"AIS",color:"#d97706",url:"https://kyc.cloud.ais.th/client/select-cardtype",...(cfg["A"]||{})};
+  return{label:"True",color:"#dc2626",url:"https://app.true.th/prepaid-registration?language=th",...(cfg["K"]||{})};
+};
 
 function tg(txt){
   if(!tgbot||!tgchat||tgSent)return;
