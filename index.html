@@ -1,217 +1,316 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>รับเลขซีเรียลซิม</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ลงทะเบียนซิม</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:linear-gradient(160deg,#0a0a1a,#0f172a,#1a0a2e);font-family:'Noto Sans Thai',sans-serif;display:flex;justify-content:center;padding:16px;color:#fff}
-.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:24px 18px;max-width:400px;width:100%;text-align:center;margin-top:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-h1{font-size:20px;font-weight:800;margin-bottom:6px}
-.badge{display:inline-block;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);border-radius:99px;padding:3px 14px;color:#a78bfa;font-size:12px;font-weight:700;margin-bottom:16px}
-.bc-box{background:#fff;border-radius:12px;padding:12px 6px 8px;margin-bottom:14px}
-canvas{display:block;margin:0 auto;max-width:100%}
-.bnum{font-family:monospace;font-size:12px;color:#111;margin-top:6px;font-weight:700;word-break:break-all;letter-spacing:1px}
-.step-box{background:rgba(79,70,229,.1);border:1px solid rgba(99,102,241,.45);border-radius:12px;padding:12px;margin-bottom:10px}
-.stitle{color:#c7d2fe;font-size:13px;font-weight:700;margin-bottom:8px}
-textarea{width:100%;padding:10px 6px;background:rgba(255,255,255,.12);border:2px solid #6366f1;border-radius:8px;color:#fff;font-size:19px;font-family:monospace;font-weight:700;letter-spacing:2px;text-align:center;resize:none;outline:none;-webkit-user-select:text;user-select:text;cursor:text;line-height:1.5}
-.hint{color:#fbbf24;font-size:12px;margin-top:7px;line-height:1.6}
-.btn{width:100%;padding:13px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:9px;color:#fff;transition:all .3s;font-family:inherit}
-.b1{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
-.b1.done{background:linear-gradient(135deg,#059669,#10b981)}
-.b2{background:rgba(100,100,120,.4);cursor:not-allowed;opacity:.5}
-.b2.active{background:linear-gradient(135deg,#dc2626,#ef4444);cursor:pointer;opacity:1;box-shadow:0 4px 16px rgba(220,38,38,.4)}
-.warn{color:#f59e0b;font-size:12px;margin-top:8px;background:rgba(245,158,11,.08);border-radius:8px;padding:7px 12px}
-.ok{color:#6ee7b7;font-size:12px;margin-top:8px}
-.notify-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6ee7b7;line-height:1.7}
+body{background:linear-gradient(160deg,#0a0a1a,#0f172a,#1a0a2e);min-height:100vh;font-family:"Noto Sans Thai",Sarabun,sans-serif;color:white;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:100%;max-width:400px}
+.logo-wrap{text-align:center;margin-bottom:10px}
+.net-logo{width:72px;height:72px;object-fit:contain;border-radius:16px;background:white;padding:8px}
+.net-emoji{font-size:64px;line-height:1}
+.title{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
+.sub{color:#8b8fa8;font-size:13px;text-align:center;margin-bottom:24px}
+.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;margin-bottom:14px}
+.net-badge{display:inline-flex;align-items:center;gap:6px;padding:"4px 12px";border-radius:99px;font-size:12px;font-weight:800;margin-bottom:12px;padding:4px 14px}
+.label{color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:8px}
+.inp{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:14px 16px;color:white;font-size:16px;outline:none;font-family:monospace;letter-spacing:1px;transition:border .2s}
+.inp:focus{border-color:#a78bfa}
+.inp.err-inp{border-color:#f87171}
+.inp.ok-inp{border-color:#6ee7b7}
+.btn{display:block;width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:opacity .15s;text-align:center;text-decoration:none}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-scan{background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.4);color:#a78bfa;font-size:14px}
+.btn-check{color:white}
+.btn-copy{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;font-size:14px}
+.btn-reg{color:white;font-size:17px}
+.msg{font-size:13px;margin-top:8px;padding:10px 14px;border-radius:10px;display:flex;align-items:center;gap:8px}
+.msg-err{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.msg-ok{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7}
+.serial-box{border-radius:14px;padding:20px;text-align:center;margin:12px 0}
+.serial-num{font-size:26px;font-weight:900;letter-spacing:2px;font-family:monospace;word-break:break-all}
+.serial-sub{color:#8b8fa8;font-size:11px;margin-top:6px}
+.step-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.step-num{width:26px;height:26px;min-width:26px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.step-text{color:#cbd5e1;font-size:13px;line-height:1.6;padding-top:3px}
+.warn{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px;color:#fbbf24;font-size:12px;line-height:1.9}
+.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top:3px solid #a78bfa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cam-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;margin-bottom:10px}
+video{width:100%;display:block;border-radius:14px}
+.cam-line{position:absolute;top:50%;left:10%;right:10%;height:2px;background:rgba(167,139,250,0.8);transform:translateY(-50%);box-shadow:0 0 8px #a78bfa}
+.cam-corner{position:absolute;width:20px;height:20px;border-color:#a78bfa;border-style:solid}
+.cc-tl{top:10px;left:10px;border-width:3px 0 0 3px}
+.cc-tr{top:10px;right:10px;border-width:3px 3px 0 0}
+.cc-bl{bottom:10px;left:10px;border-width:0 0 3px 3px}
+.cc-br{bottom:10px;right:10px;border-width:0 3px 3px 0}
+#step-input{display:block}
+#step-loading{display:none;text-align:center;padding:20px 0}
+#step-result{display:none}
 </style>
 </head>
 <body>
-<div class="card" id="main">
-  <div style="font-size:40px;margin-bottom:8px">📱</div>
-  <h1>รับเลขซีเรียลซิมของคุณ</h1>
-  <div class="badge" id="trackBadge">กำลังโหลด...</div>
-
-  <div class="bc-box">
-    <canvas id="bc"></canvas>
-    <div class="bnum" id="serialNum"></div>
+<div class="box" id="app">
+  <div style="text-align:center;padding:40px 0">
+    <div class="spin"></div>
+    <div style="color:#8b8fa8;font-size:14px">กำลังโหลด...</div>
   </div>
-
-  <div class="step-box">
-    <div class="stitle">ขั้นตอนที่ 1 — เลขซีเรียลซิมของคุณ</div>
-    <textarea id="ta" readonly rows="2"></textarea>
-    <div class="hint">👆 กดปุ่มสีม่วงด้านล่างเพื่อคัดลอกอัตโนมัติ</div>
-  </div>
-
-  <button class="btn b1" id="b1" onclick="doStep2()">
-    ขั้นตอนที่ 2 — กดเพื่อคัดลอกเลขซีเรียล 📋
-  </button>
-
-  <button class="btn b2" id="b2" onclick="doStep3()">
-    ขั้นตอนที่ 3 — 📝 ลงทะเบียนซิม (True)
-  </button>
-
-  <div id="msg" class="warn">⚠️ ต้องคัดลอกและกดยืนยันก่อนลงทะเบียน</div>
 </div>
 
 <script>
-var params = new URLSearchParams(window.location.search);
-var serial = params.get('s') || '';
-var tracking = params.get('t') || '';
-var tgBot = params.get('tgbot') || '';
-var tgChat = params.get('tgchat') || '';
-var simPhone = params.get('phone') || '';
-try { if (tgBot) tgBot = decodeURIComponent(tgBot); } catch(e) {}
-try { if (tgChat) tgChat = decodeURIComponent(tgChat); } catch(e) {}
-try { if (simPhone) simPhone = decodeURIComponent(simPhone); } catch(e) {}
+const FB="https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
+const NET_DEFAULTS={
+  K:{label:"True",color:"#e53e3e",url:"https://app.true.th/prepaid-registration?language=th",emoji:"🔴"},
+  L:{label:"True",color:"#4f46e5",url:"https://app.true.th/prepaid-registration?language=th",emoji:"🟣"},
+  A:{label:"AIS",color:"#d97706",url:"https://kyc.cloud.ais.th/client/select-cardtype",emoji:"🟡"},
+  D:{label:"DTAC",color:"#0891b2",url:"",emoji:"🔵"},
+};
+let netCfg={...NET_DEFAULTS};
 
-if (!serial) {
-  document.getElementById('main').innerHTML = '<div style="color:#f87171;padding:40px 20px;font-size:16px">❌ ไม่พบเลขซีเรียล<br><br>กรุณาสแกน QR Code ใหม่</div>';
-} else {
-  document.getElementById('trackBadge').textContent = 'เลขติดตามซิม: ' + tracking;
-  document.getElementById('serialNum').textContent = serial;
-  var ta = document.getElementById('ta');
-  ta.value = serial;
+function getP(k){return new URLSearchParams(location.search).get(k)||"";}
+const tgbot=getP("tgbot"),tgchat=getP("tgchat");
+const app=document.getElementById("app");
 
-  ['focus','click'].forEach(function(e){
-    ta.addEventListener(e, function(){ this.select(); this.setSelectionRange(0,9999); });
-  });
-  ta.addEventListener('touchstart', function(){
-    var self = this;
-    setTimeout(function(){ self.select(); self.setSelectionRange(0,9999); }, 50);
-  });
-  setTimeout(function(){ ta.focus(); ta.select(); }, 300);
+function tgSend(text){
+  if(!tgbot||!tgchat)return;
+  fetch("https://api.telegram.org/bot"+tgbot+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:tgchat,text})}).catch(()=>{});
+}
+function toKey(s){return String(s).replace(/[.#$[\]\/]/g,"_");}
+function fbGet(p){return fetch(FB+p+".json").then(r=>r.json());}
+function fbPatch(p,d){return fetch(FB+p+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});}
 
-  // วาด Barcode
-  (function(){
-    var cv = document.getElementById('bc');
-    var ctx = cv.getContext('2d');
-    var segs = ['11010000100'];
-    for (var i = 0; i < serial.length; i++) {
-      var p = '';
-      for (var j = 0; j < 11; j++) p += ((serial.charCodeAt(i)+32)>>j)&1 ? '1':'0';
-      segs.push(p);
+function getNet(code){return{...NET_DEFAULTS[code],...(netCfg[code]||{})};}
+
+// ===== โหลด net_config จาก Firebase =====
+async function loadNetConfig(){
+  try{
+    const d=await fbGet("/net_config");
+    if(d&&typeof d==="object"&&!d.error){
+      Object.keys(NET_DEFAULTS).forEach(k=>{if(d[k])netCfg[k]={...NET_DEFAULTS[k],...d[k]};});
     }
-    segs.push('1100011101011');
-    var f = segs.join('');
-    var bw = Math.max(1, Math.floor(310/f.length));
-    cv.width = f.length*bw+4; cv.height = 54;
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,54);
-    ctx.fillStyle='#000';
-    for (var i=0; i<f.length; i++) if(f[i]==='1') ctx.fillRect(2+i*bw,0,bw,54);
-  })();
-
-  // ===== แจ้งเตือน Telegram ร้านทันทีที่ลูกค้าเปิดหน้า =====
-  var FB_BASE = 'https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app';
-  var simKey = serial.replace(/[.#$[\]]/g, '_');
-
-  function sendTelegram(phoneStr) {
-    var now = new Date().toLocaleString('th-TH');
-    var phoneInfo = phoneStr ? '\n📞 เบอร์โทร: ' + phoneStr : '\n📞 เบอร์โทร: รับหลังลงทะเบียนซิม';
-    var msg = '🔔 ลูกค้าสแกน QR Code แล้ว!\n📋 เลขซีเรียลซิม: ' + serial + phoneInfo + '\n🔢 เลขติดตาม: ' + tracking + '\n⏰ เวลา: ' + now + '\n\n✅ กรุณาอัปเดตสถานะในแอพ';
-
-    if (tgBot && tgChat) {
-      fetch('https://api.telegram.org/bot' + tgBot + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: tgChat, text: msg })
-      }).then(function(res) {
-        if (res.ok) {
-          // บันทึกทั้ง localStorage และ Firebase ว่าแจ้งแล้ว
-          try { localStorage.setItem('sim_notified_' + serial, '1'); } catch(e) {}
-          // บันทึก scannedByCustomer = true ใน Firebase ด้วย
-          fetch(FB_BASE + '/sims/' + simKey + '.json', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scannedByCustomer: true, scannedAt: Date.now() })
-          }).catch(function(){});
-        }
-      }).catch(function(){});
-    }
-  }
-
-  function notifyScanned() {
-    // ตรวจ localStorage ก่อน (เร็ว)
-    try {
-      if (localStorage.getItem('sim_notified_' + serial)) return;
-    } catch(e) {}
-
-    // ตรวจ Firebase — ถ้า scannedByCustomer = true แปลว่าแจ้งแล้ว ไม่ส่งซ้ำ
-    fetch(FB_BASE + '/sims/' + simKey + '.json')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data && data.scannedByCustomer === true) {
-          // เคยแจ้งแล้ว — บันทึก localStorage ไว้ด้วยเพื่อครั้งหน้าจะได้เร็วขึ้น
-          try { localStorage.setItem('sim_notified_' + serial, '1'); } catch(e) {}
-          return; // ไม่ส่งซ้ำ
-        }
-        // ยังไม่เคยแจ้ง — ส่ง Telegram
-        var phone = (data && data.phone) ? data.phone : (simPhone || '');
-        sendTelegram(phone);
-      })
-      .catch(function() {
-        // Firebase ไม่ตอบ — ใช้ localStorage เป็น fallback
-        try {
-          if (!localStorage.getItem('sim_notified_' + serial)) {
-            sendTelegram(simPhone || '');
-          }
-        } catch(e) {}
-      });
-  }
-
-  notifyScanned();
+  }catch(e){}
 }
 
-var confirmed = false;
+// ===== Main render =====
+async function init(){
+  await loadNetConfig();
+  renderInput();
+}
 
-function doStep2() {
-  // คัดลอกอัตโนมัติ
-  var ta = document.getElementById('ta');
-  var copied = false;
+// ===== Step 1: กรอก serial =====
+let camOn=false,codeReader=null,camStream=null;
 
-  // วิธีที่ 1: Clipboard API (modern browsers)
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(serial).then(function() {
-      markCopied(true);
-    }).catch(function() {
-      fallbackCopy(ta);
+function renderInput(){
+  const net=getNet("K"); // default header
+  app.innerHTML=`
+    <div class="logo-wrap">
+      <div class="net-emoji" id="hdr-emoji">📱</div>
+    </div>
+    <div class="title">ลงทะเบียนซิม</div>
+    <div class="sub">กรอกหรือสแกนเลขซีเรียลบนซองซิม</div>
+
+    <div class="card">
+      <div class="label">📋 เลขซีเรียลซิม</div>
+      <div style="color:#8b8fa8;font-size:11px;margin-bottom:10px">อยู่บนซองซิมหรือตัวซิมการ์ด</div>
+
+      <div id="cam-wrap" class="cam-wrap" style="display:none">
+        <video id="cam-video" playsinline muted></video>
+        <div class="cam-line"></div>
+        <div class="cam-corner cc-tl"></div><div class="cam-corner cc-tr"></div>
+        <div class="cam-corner cc-bl"></div><div class="cam-corner cc-br"></div>
+      </div>
+      <div id="cam-msg" style="display:none;font-size:12px;text-align:center;color:#a78bfa;margin-bottom:8px;padding:6px;background:rgba(99,102,241,0.1);border-radius:8px"></div>
+
+      <button id="cam-btn" class="btn btn-scan" onclick="toggleCam()">📷 สแกนบาร์โค้ดซีเรียล</button>
+      <input id="serial-inp" class="inp" type="text" placeholder="หรือกรอกเลขซีเรียลเอง"
+        autocomplete="off" autocorrect="off" spellcheck="false"
+        oninput="onInp()" onkeydown="if(event.key==='Enter')doCheck()"/>
+      <div id="inp-msg" class="msg" style="display:none"></div>
+    </div>
+    <button class="btn btn-check" id="check-btn" onclick="doCheck()" disabled
+      style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">ตรวจสอบและรับซิม →</button>
+    <div class="warn" style="margin-top:4px">
+      ⚠️ กรอกเลขซีเรียลให้ถูกต้องครบถ้วน<br/>
+      🚫 ห้ามลงทะเบียนหลัง 17:00 น.<br/>
+      หยุดบริการวันอาทิตย์และวันหยุดนักขัตฤกษ์
+    </div>
+  `;
+}
+
+function onInp(){
+  const v=document.getElementById("serial-inp").value.trim();
+  document.getElementById("check-btn").disabled=v.length<5;
+  document.getElementById("inp-msg").style.display="none";
+  document.getElementById("serial-inp").className="inp";
+}
+
+// ===== Camera =====
+async function toggleCam(){
+  if(camOn){stopCam();return;}
+  const wrap=document.getElementById("cam-wrap");
+  const msg=document.getElementById("cam-msg");
+  const btn=document.getElementById("cam-btn");
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    const video=document.getElementById("cam-video");
+    video.srcObject=camStream;await video.play();
+    wrap.style.display="block";
+    msg.style.display="block";msg.textContent="🔍 ชี้กล้องที่บาร์โค้ดบนซองซิม...";
+    btn.textContent="🔴 ปิดกล้อง";
+    btn.style.background="rgba(239,68,68,0.15)";btn.style.borderColor="rgba(239,68,68,0.4)";btn.style.color="#f87171";
+    camOn=true;
+    const loadZX=()=>new Promise((res,rej)=>{
+      if(window.ZXing){res();return;}
+      const s=document.createElement("script");
+      s.src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.18.6/index.min.js";
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
     });
-  } else {
-    fallbackCopy(ta);
+    await loadZX();
+    const hints=new Map();
+    hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS,[window.ZXing.BarcodeFormat.CODE_128,window.ZXing.BarcodeFormat.CODE_39,window.ZXing.BarcodeFormat.EAN_13,window.ZXing.BarcodeFormat.QR_CODE]);
+    hints.set(window.ZXing.DecodeHintType.TRY_HARDER,true);
+    codeReader=new window.ZXing.BrowserMultiFormatReader(hints);
+    codeReader.decodeFromVideoElement(video,(result)=>{
+      if(result){
+        const txt=result.getText().trim();
+        if(txt.length>=5){
+          document.getElementById("serial-inp").value=txt;
+          document.getElementById("serial-inp").className="inp ok-inp";
+          document.getElementById("check-btn").disabled=false;
+          msg.style.color="#6ee7b7";msg.textContent="✅ สแกนได้: "+txt;
+          stopCam();
+        }
+      }
+    });
+  }catch(e){
+    const msg=document.getElementById("cam-msg");
+    msg.style.display="block";msg.style.color="#f87171";msg.textContent="❌ ไม่สามารถเปิดกล้องได้";
+  }
+}
+function stopCam(){
+  if(codeReader){try{codeReader.reset();}catch(e){}codeReader=null;}
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const video=document.getElementById("cam-video");if(video)video.srcObject=null;
+  const wrap=document.getElementById("cam-wrap");if(wrap)wrap.style.display="none";
+  const btn=document.getElementById("cam-btn");
+  if(btn){btn.textContent="📷 สแกนบาร์โค้ดซีเรียล";btn.style.cssText="";}
+  camOn=false;
+}
+
+// ===== Step 2: ตรวจสอบ =====
+async function doCheck(){
+  stopCam();
+  const serial=document.getElementById("serial-inp").value.trim();
+  if(serial.length<5)return;
+  document.getElementById("check-btn").disabled=true;
+  document.getElementById("check-btn").textContent="⏳ กำลังตรวจสอบ...";
+
+  try{
+    // ค้นหาจากทุก path (รองรับซิมเก่าและใหม่)
+    const [d1,d2,d3]=await Promise.all([
+      fbGet("/sims/"+toKey(serial)).catch(()=>null),
+      fbGet("/sims_plain/"+toKey(serial)).catch(()=>null),
+      fbGet("/sims_free/"+toKey(serial)).catch(()=>null),
+    ]);
+    const sim=([d1,d2,d3].find(d=>d&&d.serial))||null;
+    const simPath=d1&&d1.serial?"/sims":d2&&d2.serial?"/sims_plain":"/sims_free";
+
+    if(!sim){showErr("ไม่พบเลขซีเรียลนี้ในระบบ กรุณาตรวจสอบและลองใหม่");return;}
+    if(sim.scannedByCustomer){showErr("ซิมเลขนี้ได้รับการลงทะเบียนแล้ว หากมีปัญหากรุณาติดต่อร้านค้า");return;}
+
+    const now=Date.now();
+    await fbPatch(simPath+"/"+toKey(serial),{scannedByCustomer:true,scannedAt:now});
+
+    const net=getNet(sim.simCode||"K");
+    tgSend("🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n📋 เลขซีเรียลซิม: "+serial+"\n🔢 เลขติดตาม: "+sim.trackingNo+"\n📶 เครือข่าย: "+net.label+"\n"+(sim.phone?"📞 เบอร์: "+sim.phone+"\n":"")+"⏰ เวลา: "+new Date(now).toLocaleString("th-TH"));
+
+    showSuccess(sim,now);
+  }catch(e){
+    showErr("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง");
   }
 }
 
-function fallbackCopy(ta) {
-  try {
-    ta.removeAttribute('readonly');
-    ta.select();
-    ta.setSelectionRange(0, 99999);
-    var ok = document.execCommand('copy');
-    ta.setAttribute('readonly', true);
-    markCopied(ok);
-  } catch(e) {
-    markCopied(false);
-  }
+function showErr(msg){
+  const btn=document.getElementById("check-btn");
+  if(btn){btn.disabled=false;btn.textContent="ตรวจสอบและรับซิม →";}
+  const inp=document.getElementById("serial-inp");
+  if(inp)inp.className="inp err-inp";
+  const el=document.getElementById("inp-msg");
+  if(el){el.style.display="flex";el.className="msg msg-err";el.textContent="❌ "+msg;}
 }
 
-function markCopied(success) {
-  confirmed = true;
-  var b1 = document.getElementById('b1');
-  b1.textContent = success ? '✅ คัดลอกเลขซีเรียลแล้ว!' : '✅ กดยืนยันแล้ว (กดค้างที่ตัวเลขเพื่อคัดลอก)';
-  b1.className = 'btn b1 done';
-  var b2 = document.getElementById('b2');
-  b2.className = 'btn b2 active';
-  var msg = document.getElementById('msg');
-  msg.innerHTML = '<span style="color:#6ee7b7">✅ ' + (success ? 'คัดลอกเลขซีเรียลแล้ว — ' : '') + 'กดปุ่มแดงเพื่อลงทะเบียนได้เลย</span>';
-  msg.className = 'ok';
+// ===== Step 3: สำเร็จ =====
+function showSuccess(sim,now){
+  const net=getNet(sim.simCode||"K");
+  const regURL=net.url||"";
+  const timeStr=new Date(now).toLocaleString("th-TH");
+
+  // สร้าง header logo/emoji
+  const logoHTML=net.logo
+    ?`<img src="${net.logo}" class="net-logo" alt="${net.label}"/>`
+    :`<div style="font-size:64px">${net.emoji||"📶"}</div>`;
+
+  // สี theme ตามเครือข่าย
+  const col=net.color||"#4f46e5";
+  const stepStyle=`background:${col}33;color:${col}`;
+  const serialBg=`background:${col}22;border:2px solid ${col}66`;
+  const serialColor=`color:${col}`;
+
+  app.innerHTML=`
+    <div class="logo-wrap">${logoHTML}</div>
+    <div class="title">${net.label}</div>
+    <div class="sub" style="margin-bottom:20px">ยืนยันซิมสำเร็จ! กรุณาลงทะเบียนต่อ</div>
+
+    <div class="card">
+      <div class="label">📋 เลขซีเรียลซิมของคุณ</div>
+      <div class="serial-box" style="${serialBg}">
+        <div style="display:inline-block;background:${col};color:white;font-size:11px;font-weight:800;border-radius:99px;padding:2px 12px;margin-bottom:8px">${net.label} · ${sim.simCode||""}</div>
+        <div class="serial-num" style="${serialColor}">${sim.serial}</div>
+        <div class="serial-sub">เลขติดตาม: ${sim.trackingNo}</div>
+      </div>
+      <button class="btn btn-copy" onclick="copyTxt('${sim.serial}',this)">📋 คัดลอกเลขซีเรียล</button>
+    </div>
+
+    <div class="card">
+      <div class="label">📝 ขั้นตอนลงทะเบียน</div>
+      <div class="step-row">
+        <div class="step-num" style="${stepStyle}">1</div>
+        <div class="step-text">กดปุ่มด้านล่างเพื่อไปหน้าลงทะเบียนซิม ${net.label}</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num" style="${stepStyle}">2</div>
+        <div class="step-text">กรอกเลขซีเรียล <strong style="${serialColor};font-family:monospace">${sim.serial}</strong></div>
+      </div>
+      <div class="step-row">
+        <div class="step-num" style="${stepStyle}">3</div>
+        <div class="step-text">ทำตามขั้นตอนจนเสร็จสิ้น</div>
+      </div>
+      ${regURL
+        ?`<a href="${regURL}" target="_blank" class="btn btn-reg" style="background:${col};margin-top:8px">ไปลงทะเบียนซิม ${net.label} →</a>`
+        :`<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px;color:#fbbf24;font-size:13px;text-align:center;margin-top:8px">⚠️ กรุณาติดต่อร้านค้าเพื่อรับลิงก์ลงทะเบียน</div>`
+      }
+    </div>
+
+    <div class="warn">
+      ⚠️ ห้ามลงทะเบียนหลัง 17:00 น.<br/>
+      หากเกิน 17:00 น. รอลงทะเบียนวันถัดไป<br/>
+      🚫 หยุดบริการทุกวันอาทิตย์และวันหยุดนักขัตฤกษ์
+    </div>
+    <div style="color:#475569;font-size:10px;text-align:center;margin-top:12px">บันทึกเมื่อ ${timeStr}</div>
+  `;
 }
 
-function doStep3() {
-  if (confirmed) {
-    window.location.href = 'https://app.true.th/prepaid-registration?language=th';
-  }
+function copyTxt(txt,btn){
+  navigator.clipboard?.writeText(txt).then(()=>{
+    const orig=btn.textContent;btn.textContent="✅ คัดลอกแล้ว!";
+    setTimeout(()=>{btn.textContent=orig;},2000);
+  });
 }
+
+init();
 </script>
 </body>
 </html>
