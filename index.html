@@ -356,7 +356,7 @@ async function doReg(){
   const now=Date.now();
   if(navigator.clipboard){navigator.clipboard.writeText(s.serial).catch(()=>fb(s.serial));}else fb(s.serial);
   fbPatch(SPATH+"/"+toKey(s.serial),{scannedByCustomer:true,scannedAt:now}).catch(()=>{});
-  tg("🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n📋 เลขซีเรียลซิม: "+s.serial+"\n🔢 เลขติดตาม: "+s.trackingNo+"\n📶 เครือข่าย: "+n.label+"\n"+(s.phone?"📞 เบอร์: "+s.phone+"\n":"")+"⏰ เวลา: "+new Date(now).toLocaleString("th-TH")+"\n✅ ระบบอัปเดตสถานะอัตโนมัติแล้ว");
+  tg("🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n"+((SIM.simType==="free"||SIM.simCode==="L")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า")+"\n📋 เลขซีเรียลซิม: "+s.serial+"\n🔢 เลขติดตาม: "+s.trackingNo+"\n📶 เครือข่าย: "+n.label+"\n"+(s.phone?"📞 เบอร์: "+s.phone+"\n":"")+"⏰ เวลา: "+new Date(now).toLocaleString("th-TH")+"\n✅ ระบบอัปเดตสถานะอัตโนมัติแล้ว");
   const btn=document.getElementById("breg");
   if(btn){btn.textContent="⏳ กำลังเปิดหน้าลงทะเบียน...";}
   toast("✅ คัดลอกเลขซีเรียลแล้ว กำลังไปหน้าลงทะเบียน...");
