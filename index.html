@@ -356,7 +356,45 @@ async function doReg(){
   const now=Date.now();
   if(navigator.clipboard){navigator.clipboard.writeText(s.serial).catch(()=>fb(s.serial));}else fb(s.serial);
   fbPatch(SPATH+"/"+toKey(s.serial),{scannedByCustomer:true,scannedAt:now}).catch(()=>{});
-  tg("🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n"+((SIM.simType==="free"||SIM.simCode==="L")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า")+"\n📋 เลขซีเรียลซิม: "+s.serial+"\n🔢 เลขติดตาม: "+s.trackingNo+"\n📶 เครือข่าย: "+n.label+"\n"+(s.phone?"📞 เบอร์: "+s.phone+"\n":"")+"⏰ เวลา: "+new Date(now).toLocaleString("th-TH")+"\n✅ ระบบอัปเดตสถานะอัตโนมัติแล้ว");
+  // ดึงสรุปยอดจาก Firebase แล้วส่ง Telegram พร้อมกัน
+  const sendWithSummary=async()=>{
+    const todayStr=new Date(now).toLocaleDateString("th-TH",{year:"numeric",month:"2-digit",day:"2-digit"});
+    let totalSims=0,scannedToday=0,scannedAll=0;
+    try{
+      const paths=["/sims","/sims_plain","/sims_free"];
+      const results=await Promise.all(paths.map(p=>fbGet(p).catch(()=>null)));
+      results.forEach(d=>{
+        if(!d||typeof d!=="object"||d.error)return;
+        Object.values(d).forEach(sim=>{
+          if(!sim||!sim.serial)return;
+          totalSims++;
+          if(sim.scannedByCustomer)scannedAll++;
+          if(sim.scannedByCustomer&&sim.scannedAt){
+            const simDate=new Date(sim.scannedAt).toLocaleDateString("th-TH",{year:"numeric",month:"2-digit",day:"2-digit"});
+            if(simDate===todayStr)scannedToday++;
+          }
+        });
+      });
+      // นับลูกค้าที่เพิ่งลงทะเบียน (ตัวนี้เอง) ด้วย
+      scannedToday++;scannedAll++;
+    }catch(e){scannedToday=1;}
+    const simType=((SIM.simType==="free"||SIM.simCode==="L")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า");
+    tg(
+      "🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n"+
+      simType+"\n"+
+      "📋 เลขซีเรียลซิม: "+s.serial+"\n"+
+      "🔢 เลขติดตาม: "+s.trackingNo+"\n"+
+      "📶 เครือข่าย: "+n.label+"\n"+
+      (s.phone?"📞 เบอร์: "+s.phone+"\n":"")+
+      "⏰ เวลา: "+new Date(now).toLocaleString("th-TH")+"\n"+
+      "────────────────────\n"+
+      "📊 สรุปยอดวันนี้\n"+
+      "✅ ลงทะเบียนวันนี้: "+scannedToday+" ราย\n"+
+      "📦 ซิมทั้งหมดในระบบ: "+totalSims+" ซิม\n"+
+      "⏳ รอลงทะเบียน: "+(totalSims-scannedAll)+" ซิม"
+    );
+  };
+  sendWithSummary();
   const btn=document.getElementById("breg");
   if(btn){btn.textContent="⏳ กำลังเปิดหน้าลงทะเบียน...";}
   toast("✅ คัดลอกเลขซีเรียลแล้ว กำลังไปหน้าลงทะเบียน...");
