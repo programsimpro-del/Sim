@@ -355,54 +355,67 @@ async function doReg(){
   if(!n.url){toast("⚠️ ยังไม่มีลิงก์ลงทะเบียน กรุณาติดต่อร้านค้า");return;}
   const now=Date.now();
   if(navigator.clipboard){navigator.clipboard.writeText(s.serial).catch(()=>fb(s.serial));}else fb(s.serial);
-  fbPatch(SPATH+"/"+toKey(s.serial),{scannedByCustomer:true,scannedAt:now}).catch(()=>{});
-  // ดึงสรุปยอดจาก Firebase แล้วส่ง Telegram พร้อมกัน
-  const sendWithSummary=async()=>{
-    const todayDate=new Date(now);
-    const todayY=todayDate.getFullYear(),todayM=todayDate.getMonth(),todayD=todayDate.getDate();
-    const isTodayTs=ts=>{
-      if(!ts)return false;
-      const d=new Date(Number(ts));
-      return d.getFullYear()===todayY&&d.getMonth()===todayM&&d.getDate()===todayD;
-    };
-    let totalSims=0,scannedToday=0,scannedAll=0;
-    try{
-      const paths=["/sims","/sims_plain","/sims_free"];
-      const results=await Promise.all(paths.map(p=>fbGet(p).catch(()=>null)));
-      const seen=new Set();
-      results.forEach(d=>{
-        if(!d||typeof d!=="object"||d.error)return;
-        Object.values(d).forEach(sim=>{
-          if(!sim||!sim.serial||seen.has(sim.serial))return;
-          seen.add(sim.serial);
-          totalSims++;
-          // ถ้าเป็นซิมที่เพิ่งสแกน ใช้ now เป็น scannedAt
-          const isThis=sim.serial===s.serial;
-          const scAt=isThis?now:sim.scannedAt;
-          if(sim.scannedByCustomer||isThis){
-            scannedAll++;
-            if(isTodayTs(scAt))scannedToday++;
-          }
+
+  // เช็ค Firebase ก่อนว่าส่ง Telegram ไปแล้วหรือยัง
+  let alreadyNotified=false;
+  try{
+    const cur=await fbGet(SPATH+"/"+toKey(s.serial));
+    if(cur&&cur.tgNotified)alreadyNotified=true;
+  }catch(e){}
+
+  // update Firebase — ถ้ายังไม่เคยแจ้งให้ set tgNotified ด้วย
+  const patch={scannedByCustomer:true,scannedAt:now};
+  if(!alreadyNotified)patch.tgNotified=true;
+  fbPatch(SPATH+"/"+toKey(s.serial),patch).catch(()=>{});
+
+  // ส่ง Telegram เฉพาะครั้งแรกเท่านั้น
+  if(!alreadyNotified){
+    const sendWithSummary=async()=>{
+      const todayDate=new Date(now);
+      const todayY=todayDate.getFullYear(),todayM=todayDate.getMonth(),todayD=todayDate.getDate();
+      const isTodayTs=ts=>{
+        if(!ts)return false;
+        const d=new Date(Number(ts));
+        return d.getFullYear()===todayY&&d.getMonth()===todayM&&d.getDate()===todayD;
+      };
+      let totalSims=0,scannedToday=0,scannedAll=0;
+      try{
+        const paths=["/sims","/sims_plain","/sims_free"];
+        const results=await Promise.all(paths.map(p=>fbGet(p).catch(()=>null)));
+        const seen=new Set();
+        results.forEach(d=>{
+          if(!d||typeof d!=="object"||d.error)return;
+          Object.values(d).forEach(sim=>{
+            if(!sim||!sim.serial||seen.has(sim.serial))return;
+            seen.add(sim.serial);
+            totalSims++;
+            const isThis=sim.serial===s.serial;
+            const scAt=isThis?now:sim.scannedAt;
+            if(sim.scannedByCustomer||isThis){
+              scannedAll++;
+              if(isTodayTs(scAt))scannedToday++;
+            }
+          });
         });
-      });
-    }catch(e){scannedToday=1;totalSims=1;scannedAll=1;}
-    const simType=((SIM.simType==="free"||SIM.simCode==="L")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า");
-    tg(
-      "🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n"+
-      simType+"\n"+
-      "📋 เลขซีเรียลซิม: "+s.serial+"\n"+
-      "🔢 เลขติดตาม: "+s.trackingNo+"\n"+
-      "📶 เครือข่าย: "+n.label+"\n"+
-      (s.phone?"📞 เบอร์: "+s.phone+"\n":"")+
-      "⏰ เวลา: "+new Date(now).toLocaleString("th-TH")+"\n"+
-      "────────────────────\n"+
-      "📊 สรุปยอดวันนี้\n"+
-      "✅ ลงทะเบียนวันนี้: "+scannedToday+" ราย\n"+
-      "📦 ซิมทั้งหมดในระบบ: "+totalSims+" ซิม\n"+
-      "⏳ รอลงทะเบียน: "+(totalSims-scannedAll)+" ซิม"
-    );
-  };
-  sendWithSummary();
+      }catch(e){scannedToday=1;totalSims=1;scannedAll=1;}
+      const simType=((SIM.simType==="free"||SIM.simCode==="L")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า");
+      tg(
+        "🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n"+
+        simType+"\n"+
+        "📋 เลขซีเรียลซิม: "+s.serial+"\n"+
+        "🔢 เลขติดตาม: "+s.trackingNo+"\n"+
+        "📶 เครือข่าย: "+n.label+"\n"+
+        (s.phone?"📞 เบอร์: "+s.phone+"\n":"")+
+        "⏰ เวลา: "+new Date(now).toLocaleString("th-TH")+"\n"+
+        "────────────────────\n"+
+        "📊 สรุปยอดวันนี้\n"+
+        "✅ ลงทะเบียนวันนี้: "+scannedToday+" ราย\n"+
+        "📦 ซิมทั้งหมดในระบบ: "+totalSims+" ซิม\n"+
+        "⏳ รอลงทะเบียน: "+(totalSims-scannedAll)+" ซิม"
+      );
+    };
+    sendWithSummary();
+  }
   const btn=document.getElementById("breg");
   if(btn){btn.textContent="⏳ กำลังเปิดหน้าลงทะเบียน...";}
   toast("✅ คัดลอกเลขซีเรียลแล้ว กำลังไปหน้าลงทะเบียน...");
