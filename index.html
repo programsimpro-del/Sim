@@ -416,6 +416,29 @@ async function doReg(){
     };
     sendWithSummary();
   }
+  // บันทึกประวัติลง /history ก่อนลบ
+  const historyData={
+    serial:s.serial,
+    trackingNo:s.trackingNo,
+    simCode:s.simCode||"",
+    simType:s.simType||"plain",
+    phone:s.phone||"",
+    scannedAt:now,
+    registeredAt:now,
+    network:n.label,
+  };
+  const fbDelete=p=>fetch(FB+p+".json",{method:"DELETE"}).catch(()=>{});
+  const fbSet=(p,d)=>fetch(FB+p+".json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}).catch(()=>{});
+
+  // บันทึกใน /history/YYYYMM/serial
+  const ym=new Date(now).toISOString().slice(0,7).replace("-","");
+  fbSet("/history/"+ym+"/"+toKey(s.serial), historyData);
+
+  // ลบออกจากทุก path หลังจาก 3 วินาที (รอให้ Telegram ส่งเสร็จก่อน)
+  setTimeout(()=>{
+    ["/sims/","/sims_plain/","/sims_free/"].forEach(p=>fbDelete(p+toKey(s.serial)));
+  },3000);
+
   const btn=document.getElementById("breg");
   if(btn){btn.textContent="⏳ กำลังเปิดหน้าลงทะเบียน...";}
   toast("✅ คัดลอกเลขซีเรียลแล้ว กำลังไปหน้าลงทะเบียน...");
