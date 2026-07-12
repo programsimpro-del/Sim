@@ -356,16 +356,27 @@ async function doReg(){
   const now=Date.now();
   if(navigator.clipboard){navigator.clipboard.writeText(s.serial).catch(()=>fb(s.serial));}else fb(s.serial);
 
-  // เช็ค Firebase ก่อนว่าส่ง Telegram ไปแล้วหรือยัง
+  // เช็ค Firebase ทุก path ก่อนส่ง Telegram
   let alreadyNotified=false;
   try{
-    const cur=await fbGet(SPATH+"/"+toKey(s.serial));
-    if(cur&&cur.tgNotified)alreadyNotified=true;
+    const ym=new Date(now).toISOString().slice(0,7).replace("-","");
+    const ymPrev=new Date(now-30*86400000).toISOString().slice(0,7).replace("-","");
+    const key=toKey(s.serial);
+    // เช็คทุก path ที่อาจมีซิมนี้อยู่
+    const checks=await Promise.all([
+      fbGet("/sims_plain/"+key).catch(()=>null),
+      fbGet("/sims_free/"+key).catch(()=>null),
+      fbGet("/sims/"+key).catch(()=>null),
+      fbGet("/history/"+ym+"/"+key).catch(()=>null),
+      fbGet("/history/"+ymPrev+"/"+key).catch(()=>null),
+    ]);
+    for(const d of checks){
+      if(d&&(d.tgNotified||d.scannedByCustomer)){alreadyNotified=true;break;}
+    }
   }catch(e){}
 
-  // update Firebase — ถ้ายังไม่เคยแจ้งให้ set tgNotified ด้วย
-  const patch={scannedByCustomer:true,scannedAt:now};
-  if(!alreadyNotified)patch.tgNotified=true;
+  // set tgNotified ใน path ปัจจุบัน
+  const patch={scannedByCustomer:true,scannedAt:now,tgNotified:true};
   fbPatch(SPATH+"/"+toKey(s.serial),patch).catch(()=>{});
 
   // ส่ง Telegram เฉพาะครั้งแรกเท่านั้น
@@ -442,7 +453,38 @@ async function doReg(){
   const btn=document.getElementById("breg");
   if(btn){btn.textContent="⏳ กำลังเปิดหน้าลงทะเบียน...";}
   toast("✅ คัดลอกเลขซีเรียลแล้ว กำลังไปหน้าลงทะเบียน...");
-  setTimeout(()=>window.open(n.url,"_blank"),600);
+
+  // แสดง popup แจ้งให้แคปหน้าจอและทักแชท LINE OA ก่อน redirect
+  const overlay=document.createElement("div");
+  overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px";
+  overlay.innerHTML=`
+    <div style="background:#fff;border-radius:20px;padding:24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+      <div style="font-size:48px;margin-bottom:12px">📸</div>
+      <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:8px">แคปหน้าจอก่อนนะคะ!</div>
+      <div style="font-size:14px;color:#444;line-height:1.7;margin-bottom:16px">
+        หลังลงทะเบียนเสร็จแล้ว<br/>
+        <b>กรุณาแคปหน้าจอ</b> ที่แสดงเลขอ้างอิง<br/>
+        แล้วส่งให้ Admin ผ่าน <b>LINE OA</b><br/>
+        เพื่อให้ Admin ตรวจสอบและดำเนินการต่อ
+      </div>
+      <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;color:#15803d;font-weight:700">
+        📲 ทักแชท LINE OA หลังแคปหน้าจอ<br/>
+        <span style="font-size:11px;font-weight:400;color:#4ade80">Admin จะได้เห็นและช่วยเหลือได้ทันที</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button id="popup-ok" style="flex:1;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer">
+          เข้าใจแล้ว ไปลงทะเบียน →
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById("popup-ok").onclick=()=>{
+    overlay.remove();
+    window.open(n.url,"_blank");
+  };
+  // auto redirect หลัง 15 วินาที ถ้าลูกค้าไม่กด
+  setTimeout(()=>{if(document.body.contains(overlay)){overlay.remove();window.open(n.url,"_blank");}},15000);
 }
 
 // ===== หน้ากรอก serial =====
