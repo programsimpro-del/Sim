@@ -233,6 +233,7 @@ const tgbot=P("tgbot"),tgchat=P("tgchat");
 const toKey=s=>String(s).replace(/[.#$[\]\/]/g,"_");
 const fbGet=p=>fetch(FB+p+".json").then(r=>r.json());
 const fbPatch=(p,d)=>fetch(FB+p+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
+const fbSet=(p,d)=>fetch(FB+p+".json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
 const net=(code,trackingNo)=>{
   // ดูจากตัวอักษรแรกของ trackingNo ก่อน ถ้าไม่มีค่อยดู simCode
   const src=trackingNo||code||"";
