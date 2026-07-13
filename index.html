@@ -363,12 +363,13 @@ async function doReg(){
   const ymPrev=new Date(now-30*86400000).toISOString().slice(0,7).replace("-","");
   const key=toKey(s.serial);
   try{
+    const to=ms=>new Promise(r=>setTimeout(()=>r(null),ms));
     const checks=await Promise.all([
-      fbGet("/sims_plain/"+key).catch(()=>null),
-      fbGet("/sims_free/"+key).catch(()=>null),
-      fbGet("/sims/"+key).catch(()=>null),
-      fbGet("/history/"+ym+"/"+key).catch(()=>null),
-      fbGet("/history/"+ymPrev+"/"+key).catch(()=>null),
+      Promise.race([fbGet("/sims_plain/"+key),to(2000)]).catch(()=>null),
+      Promise.race([fbGet("/sims_free/"+key),to(2000)]).catch(()=>null),
+      Promise.race([fbGet("/sims/"+key),to(2000)]).catch(()=>null),
+      Promise.race([fbGet("/history/"+ym+"/"+key),to(2000)]).catch(()=>null),
+      Promise.race([fbGet("/history/"+ymPrev+"/"+key),to(2000)]).catch(()=>null),
     ]);
     for(const d of checks){
       if(d&&(d.tgNotified||d.scannedByCustomer)){alreadyNotified=true;break;}
@@ -389,8 +390,8 @@ async function doReg(){
     scannedByCustomer:true,
     network:n.label,
   };
-  await fbSet("/history/"+ym+"/"+key, historyRecord).catch(()=>{});
-  // อัปเดต sims path ด้วย (ถ้ายังมีอยู่)
+  // เขียน history และ patch แบบ fire-and-forget ไม่ await
+  fbSet("/history/"+ym+"/"+key, historyRecord).catch(()=>{});
   fbPatch(SPATH+"/"+key,{scannedByCustomer:true,scannedAt:now,tgNotified:true}).catch(()=>{});
 
   // ส่ง Telegram เฉพาะครั้งแรกเท่านั้น
