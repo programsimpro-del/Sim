@@ -358,11 +358,10 @@ async function doReg(){
 
   // เช็ค Firebase ทุก path ก่อนส่ง Telegram
   let alreadyNotified=false;
+  const ym=new Date(now).toISOString().slice(0,7).replace("-","");
+  const ymPrev=new Date(now-30*86400000).toISOString().slice(0,7).replace("-","");
+  const key=toKey(s.serial);
   try{
-    const ym=new Date(now).toISOString().slice(0,7).replace("-","");
-    const ymPrev=new Date(now-30*86400000).toISOString().slice(0,7).replace("-","");
-    const key=toKey(s.serial);
-    // เช็คทุก path ที่อาจมีซิมนี้อยู่
     const checks=await Promise.all([
       fbGet("/sims_plain/"+key).catch(()=>null),
       fbGet("/sims_free/"+key).catch(()=>null),
@@ -375,9 +374,23 @@ async function doReg(){
     }
   }catch(e){}
 
-  // set tgNotified ใน path ปัจจุบัน
-  const patch={scannedByCustomer:true,scannedAt:now,tgNotified:true};
-  fbPatch(SPATH+"/"+toKey(s.serial),patch).catch(()=>{});
+  // เขียน tgNotified ลง /history ทันที ก่อนส่ง Telegram
+  // เพื่อให้การเช็คครั้งต่อไปพบว่าส่งไปแล้ว แม้ซิมจะถูกลบออกจาก sims_plain แล้ว
+  const historyRecord={
+    serial:s.serial,
+    trackingNo:s.trackingNo,
+    simCode:s.simCode||"",
+    simType:s.simType||"plain",
+    phone:s.phone||"",
+    scannedAt:now,
+    registeredAt:now,
+    tgNotified:true,
+    scannedByCustomer:true,
+    network:n.label,
+  };
+  await fbSet("/history/"+ym+"/"+key, historyRecord).catch(()=>{});
+  // อัปเดต sims path ด้วย (ถ้ายังมีอยู่)
+  fbPatch(SPATH+"/"+key,{scannedByCustomer:true,scannedAt:now,tgNotified:true}).catch(()=>{});
 
   // ส่ง Telegram เฉพาะครั้งแรกเท่านั้น
   if(!alreadyNotified){
@@ -427,25 +440,8 @@ async function doReg(){
     };
     sendWithSummary();
   }
-  // บันทึกประวัติลง /history ก่อนลบ
-  const historyData={
-    serial:s.serial,
-    trackingNo:s.trackingNo,
-    simCode:s.simCode||"",
-    simType:s.simType||"plain",
-    phone:s.phone||"",
-    scannedAt:now,
-    registeredAt:now,
-    network:n.label,
-  };
   const fbDelete=p=>fetch(FB+p+".json",{method:"DELETE"}).catch(()=>{});
-  const fbSet=(p,d)=>fetch(FB+p+".json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}).catch(()=>{});
-
-  // บันทึกใน /history/YYYYMM/serial
-  const ym=new Date(now).toISOString().slice(0,7).replace("-","");
-  fbSet("/history/"+ym+"/"+toKey(s.serial), historyData);
-
-  // ลบออกจากทุก path หลังจาก 3 วินาที (รอให้ Telegram ส่งเสร็จก่อน)
+  // ลบออกจากทุก path หลังจาก 3 วินาที
   setTimeout(()=>{
     ["/sims/","/sims_plain/","/sims_free/"].forEach(p=>fbDelete(p+toKey(s.serial)));
   },3000);
