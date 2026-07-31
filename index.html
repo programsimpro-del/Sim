@@ -415,23 +415,8 @@ async function doReg(){
     }
   }catch(e){}
 
-  // เขียน tgNotified ลง /history ทันที ก่อนส่ง Telegram
-  // เพื่อให้การเช็คครั้งต่อไปพบว่าส่งไปแล้ว แม้ซิมจะถูกลบออกจาก sims_plain แล้ว
-  const historyRecord={
-    serial:s.serial,
-    trackingNo:s.trackingNo,
-    simCode:s.simCode||"",
-    simType:s.simType||"plain",
-    phone:s.phone||"",
-    scannedAt:now,
-    registeredAt:now,
-    tgNotified:true,
-    scannedByCustomer:true,
-    network:n.label,
-  };
-  // เขียน history และ patch แบบ fire-and-forget ไม่ await
-  fbSet("/history/"+ym+"/"+key, historyRecord).catch(()=>{});
-  fbPatch(SPATH+"/"+key,{scannedByCustomer:true,scannedAt:now,tgNotified:true}).catch(()=>{});
+  // เขียน scannedByCustomer ก่อน แต่ยังไม่ set tgNotified
+  fbPatch(SPATH+"/"+key,{scannedByCustomer:true,scannedAt:now}).catch(()=>{});
 
   // ส่ง Telegram เฉพาะครั้งแรกเท่านั้น
   if(!alreadyNotified){
@@ -463,7 +448,7 @@ async function doReg(){
           });
         });
       }catch(e){scannedToday=1;totalSims=1;scannedAll=1;}
-      const simType=((SIM.simType==="free"||SIM.simCode==="L")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า");
+      const simType=((SIM.simType==="free"||SPATH==="/sims_free")?"🎁 ซิมฟรีเดือนแรก":"📦 ซิมเปล่า");
       tg(
         "🔔 ลูกค้าลงทะเบียนซิมแล้ว!\n"+
         simType+"\n"+
@@ -478,6 +463,15 @@ async function doReg(){
         "📦 ซิมทั้งหมดในระบบ: "+totalSims+" ซิม\n"+
         "⏳ รอลงทะเบียน: "+(totalSims-scannedAll)+" ซิม"
       );
+      // บันทึก history หลังส่ง Telegram สำเร็จ
+      const historyRecord={
+        serial:s.serial,trackingNo:s.trackingNo,simCode:s.simCode||"",
+        simType:s.simType||"plain",phone:s.phone||"",
+        scannedAt:now,registeredAt:now,tgNotified:true,
+        scannedByCustomer:true,network:n.label,
+      };
+      fbSet("/history/"+ym+"/"+key,historyRecord).catch(()=>{});
+      fbPatch(SPATH+"/"+key,{tgNotified:true}).catch(()=>{});
     };
     sendWithSummary();
   }
