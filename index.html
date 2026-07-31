@@ -381,7 +381,7 @@ function checkPhone(){
   if(!btn)return;
   const phone=inp?inp.value.trim():'';
   const noPhone=chk?chk.checked:false;
-  const valid=phone.match(/^0[689]\d{8}$/)||noPhone;
+  const valid=phone.match(/^0\d{9}$/)||noPhone;
   btn.style.opacity=valid?'1':'0.4';
   btn.style.pointerEvents=valid?'auto':'none';
   if(valid&&phone)SIM.phone=phone;
