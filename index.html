@@ -415,7 +415,7 @@ async function doReg(){
       Promise.race([fbGet("/history/"+ymPrev+"/"+key),to(2000)]).catch(()=>null),
     ]);
     for(const d of checks){
-      if(d&&(d.tgNotified||d.scannedByCustomer)){alreadyNotified=true;break;}
+      if(d&&d.tgNotified){alreadyNotified=true;break;}
     }
   }catch(e){}
 
