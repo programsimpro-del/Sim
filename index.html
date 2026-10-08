@@ -12,11 +12,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
 .hdr{display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e8e8;flex-shrink:0;padding-top:env(safe-area-inset-top,0px)}
 .hdr-inner{display:flex;align-items:center;width:100%;height:52px;padding:0 4px}
 .hdr-back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#e8001c;flex-shrink:0}
-.hdr-title{flex:1;text-align:center;font-size:18px;font-weight:700;color:#1a1a1a;margin-right:44px}
+.hdr-title{flex:1;text-align:center;font-size:22px;font-weight:700;color:#1a1a1a;margin-right:44px}
 
 /* Tabs */
 .tabs{display:flex;flex-shrink:0;background:#fff;border-bottom:2px solid #e8e8e8}
-.tab-btn{flex:1;height:48px;background:none;border:none;border-bottom:3px solid transparent;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;color:#999;cursor:pointer;position:relative;bottom:-2px;transition:color .15s,border-color .15s}
+.tab-btn{flex:1;height:56px;background:none;border:none;border-bottom:3px solid transparent;font-family:'Sarabun',sans-serif;font-size:20px;font-weight:700;color:#999;cursor:pointer;position:relative;bottom:-2px;transition:color .15s,border-color .15s}
 .tab-btn.active{color:#e8001c;border-bottom-color:#e8001c}
 
 /* Content */
@@ -36,7 +36,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   position:absolute;left:0;right:0;
   top:33%;
   text-align:center;
-  font-size:18px;font-weight:700;color:#fff;
+  font-size:24px;font-weight:700;color:#fff;
   z-index:3;pointer-events:none;
   text-shadow:0 1px 6px rgba(0,0,0,0.6)
 }
@@ -76,8 +76,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   border:2px solid rgba(255,255,255,0.35);border-radius:18px;
   display:flex;align-items:center;justify-content:center
 }
-.cam-idle-msg{font-size:18px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center}
-.cam-idle-sub{font-size:14px;color:rgba(255,255,255,0.5);text-align:center;margin-top:-6px}
+.cam-idle-msg{font-size:22px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center}
+.cam-idle-sub{font-size:17px;color:rgba(255,255,255,0.5);text-align:center;margin-top:-4px}
 
 /* toast */
 .toast{
@@ -119,26 +119,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
 }
 
 .cam-popup-desc{
-  font-size:14px;color:#444;text-align:center;
-  line-height:1.55;margin-bottom:6px;
-  padding:0 24px
+  font-size:20px;color:#444;text-align:center;
+  line-height:1.6;margin-bottom:6px;
+  padding:0 20px
 }
-.cam-popup-desc strong{color:#111;font-weight:700}
+.cam-popup-desc strong{color:#111;font-weight:800}
 
 .cam-popup-divider{
   height:1px;background:#e8e8e8;margin:8px 0 0
 }
 
 .cam-popup-btn{
-  width:100%;padding:17px 24px;
+  width:100%;padding:20px 24px;
   background:none;border:none;border-bottom:1px solid #e8e8e8;
   font-family:'Sarabun',sans-serif;
-  font-size:17px;font-weight:700;color:#1a73e8;
+  font-size:22px;font-weight:700;color:#1a73e8;
   cursor:pointer;text-align:center;display:block
 }
 .cam-popup-btn:active{background:#f5f5f5}
 .cam-popup-btn.once{color:#1a73e8}
-.cam-popup-btn.deny{color:#444;font-weight:600;border-bottom:none;padding-bottom:20px}
+.cam-popup-btn.deny{color:#444;font-weight:600;border-bottom:none;padding-bottom:24px}
 
 /* ── MANUAL PANE ── */
 .manual-pane{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -288,8 +288,8 @@ function hidePopup() {
 
 function openCameraFromPopup() {
   hidePopup();
-  // เรียกกล้องทันทีใน gesture event เดียวกัน (สำคัญมากสำหรับ iOS/Android)
-  requestAnimationFrame(() => startCamera());
+  // ต้องเรียก getUserMedia ใน user gesture เดียวกันทันที ห้าม delay/setTimeout
+  startCamera();
 }
 
 function closePopupAndManual() {
@@ -311,7 +311,25 @@ async function startCamera() {
   idle.hidden=true;
 
   try {
-    if(typeof ZXing==='undefined') { idle.hidden=false; toast('กำลังโหลด...'); return; }
+    // ขอสิทธิ์กล้องจากเบราว์เซอร์ทันที (ต้องอยู่ใน user gesture)
+    try {
+      stream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
+      });
+    } catch(e1) {
+      // fallback ลดความต้องการ
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    }
+
+    // เริ่มวิดีโอก่อน
+    const vid=document.getElementById('video');
+    vid.srcObject=stream;
+    await vid.play().catch(()=>{});
+
+    // โหลด ZXing ถ้ายังไม่พร้อม
+    if(typeof ZXing==='undefined') {
+      await new Promise(res=>{ const t=setInterval(()=>{ if(typeof ZXing!=='undefined'){clearInterval(t);res();} },100); });
+    }
 
     const hints=new Map();
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
@@ -321,18 +339,6 @@ async function startCamera() {
     ]);
     hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
     reader=new ZXing.BrowserMultiFormatReader(hints,{delayBetweenScanAttempts:80});
-
-    try {
-      stream=await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
-      });
-    } catch(e) {
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    }
-
-    const vid=document.getElementById('video');
-    vid.srcObject=stream;
-    await vid.play().catch(()=>{});
 
     scanning=true;
     reader.decodeFromVideoElement('video',(result)=>{
@@ -347,14 +353,8 @@ async function startCamera() {
     const msg=document.getElementById('camIdleMsg');
     if(e.name==='NotAllowedError'){
       msg.textContent='กรุณาอนุญาตใช้กล้อง';
-      // แสดง popup อีกครั้งพร้อมข้อความแจ้ง
-      setTimeout(()=>{
-        document.querySelector('.cam-popup-title').textContent='ไม่สามารถเปิดกล้องได้';
-        document.querySelector('.cam-popup-desc').textContent='กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง แล้วลองใหม่อีกครั้ง';
-        showCameraPopup();
-      }, 300);
     } else {
-      msg.textContent='แตะเพื่อเปิดกล้อง';
+      msg.textContent='แตะเพื่อลองใหม่';
     }
     scanning=false;
   }
