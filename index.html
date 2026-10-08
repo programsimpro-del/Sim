@@ -36,10 +36,13 @@ html, body {
 /* ── App Shell — fills whole viewport ── */
 .app {
   position: fixed;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overflow: hidden;
 }
 
 /* ── Header ── */
@@ -107,23 +110,31 @@ html, body {
   position: relative;
   overflow: hidden;
   min-height: 0;
+  width: 100%;
 }
 
 /* ── Panes — each fills content area absolutely ── */
 .pane {
   position: absolute;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
   display: none;
 }
 .pane.active { display: flex; flex-direction: column; }
 
 /* ══════════════════════════
-   SCAN PANE — full bleed camera
+   SCAN PANE — True App style
    ══════════════════════════ */
 .scan-pane {
-  background: #000;
+  background: #3a3a3a;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
+/* Camera feed fills the whole pane */
 #video {
   position: absolute;
   inset: 0;
@@ -131,91 +142,83 @@ html, body {
   height: 100%;
   object-fit: cover;
   display: block;
+  z-index: 1;
 }
 
-/* Dark vignette top + bottom */
-.cam-vignette-top,
-.cam-vignette-bottom {
-  position: absolute; left: 0; right: 0;
-  pointer-events: none;
+/* Dark overlay tint over camera — True app style grey */
+.cam-vignette-top { display: none; }
+.cam-vignette-bottom { display: none; }
+
+/* Full dark overlay with hole cut-out effect (CSS only) */
+.scan-overlay-bg {
+  position: absolute;
+  inset: 0;
   z-index: 2;
-}
-.cam-vignette-top {
-  top: 0; height: 100px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
-}
-.cam-vignette-bottom {
-  bottom: 0; height: 140px;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  pointer-events: none;
+  /* semi-transparent dark overlay everywhere */
+  background: rgba(0,0,0,0.45);
 }
 
 /* Instruction text above frame */
 .cam-label {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 50%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 18px;
-  font-size: 15px; font-weight: 600;
+  left: 0; right: 0;
+  top: calc(50% - 80px);
+  transform: translateY(-100%);
+  padding-bottom: 16px;
+  text-align: center;
+  font-size: 16px; font-weight: 600;
   color: #fff;
-  z-index: 3;
+  z-index: 4;
   pointer-events: none;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+  letter-spacing: 0.01em;
 }
 
-/* Scan frame — centred in screen */
+/* Scan frame wrapper — centred */
 .scan-overlay {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   z-index: 3; pointer-events: none;
 }
+
 .scan-frame {
   position: relative;
-  width: 82%; aspect-ratio: 3.5 / 1;
+  width: 84%;
+  aspect-ratio: 3.2 / 1;
+  /* frosted rectangle inside */
+  background: rgba(180,180,180,0.18);
+  border-radius: 14px;
 }
-/* Four rounded corners */
+
+/* Four L-shaped corners — grey like True app */
 .scan-frame::before, .scan-frame::after,
 .scan-frame > span::before, .scan-frame > span::after {
   content: '';
   position: absolute;
-  width: 28px; height: 28px;
-  border-color: #fff;
+  width: 32px; height: 32px;
+  border-color: rgba(220,220,220,0.9);
   border-style: solid;
 }
-.scan-frame::before  { top: 0; left: 0;   border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
-.scan-frame::after   { top: 0; right: 0;  border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
-.scan-frame > span::before { bottom: 0; left: 0;  border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
-.scan-frame > span::after  { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+.scan-frame::before  { top: -2px; left: -2px;   border-width: 3px 0 0 3px; border-radius: 10px 0 0 0; }
+.scan-frame::after   { top: -2px; right: -2px;  border-width: 3px 3px 0 0; border-radius: 0 10px 0 0; }
+.scan-frame > span::before { bottom: -2px; left: -2px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 10px; }
+.scan-frame > span::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 10px 0; }
 
-/* Animated scan line */
-.scan-line {
-  position: absolute; left: 2px; right: 2px; height: 2.5px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 20%, #fff 50%, rgba(255,255,255,0.6) 80%, transparent 100%);
-  top: 0;
-  animation: scanmove 1.8s ease-in-out infinite;
-  box-shadow: 0 0 8px 2px rgba(232,0,28,0.5);
-}
-@keyframes scanmove {
-  0%   { top: 2px;    opacity: 0; }
-  8%   { opacity: 1; }
-  92%  { opacity: 1; }
-  100% { top: calc(100% - 2px); opacity: 0; }
-}
+/* No scan line — matches True app */
+.scan-line { display: none; }
 
 /* Torch / zoom controls */
 .cam-controls {
   position: absolute;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
   left: 0; right: 0;
   display: flex; align-items: center; justify-content: center;
   gap: 20px;
-  z-index: 4;
+  z-index: 5;
 }
 .cam-ctrl-btn {
   width: 48px; height: 48px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
   border: 1.5px solid rgba(255,255,255,0.3);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -233,9 +236,8 @@ html, body {
 .zoom-label {
   font-size: 14px; font-weight: 700; color: #fff;
   min-width: 40px; text-align: center;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
   cursor: pointer;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
   border: 1.5px solid rgba(255,255,255,0.25);
   border-radius: 20px;
   padding: 9px 16px;
@@ -247,9 +249,9 @@ html, body {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 14px;
-  background: #000;
+  background: #3a3a3a;
   cursor: pointer;
-  z-index: 5;
+  z-index: 6;
 }
 .cam-idle-icon {
   width: 64px; height: 64px;
@@ -259,7 +261,7 @@ html, body {
 }
 .cam-idle p {
   font-size: 14px; font-weight: 600;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255,255,255,0.7);
   text-align: center;
 }
 
@@ -269,7 +271,7 @@ html, body {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   background: rgba(0,0,0,0.85);
-  z-index: 6;
+  z-index: 7;
   padding: 32px 24px;
   gap: 18px;
   animation: fadeIn 0.22s ease;
@@ -450,9 +452,10 @@ html, body {
     <div class="pane active scan-pane" id="paneScan">
       <video id="video" playsinline muted autoplay></video>
 
-      <div class="cam-vignette-top"></div>
-      <div class="cam-vignette-bottom"></div>
+      <!-- dark overlay tint -->
+      <div class="scan-overlay-bg"></div>
 
+      <!-- label above frame -->
       <div class="cam-label">สแกนบาร์โค้ดบนซองซิมการ์ด</div>
 
       <div class="scan-overlay">
@@ -465,12 +468,13 @@ html, body {
       <!-- Idle overlay -->
       <div class="cam-idle" id="camIdle" onclick="startCamera()">
         <div class="cam-idle-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.8" stroke-linecap="round">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
         </div>
         <p id="camIdleMsg">กำลังเปิดกล้อง...</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:-6px;">หรือแตะที่นี่เพื่อเปิดกล้อง</p>
       </div>
 
       <!-- Torch + Zoom -->
@@ -530,12 +534,18 @@ html, body {
 
 <script>
 // ── Auto-start camera on load ──
+// Mobile browsers require a user gesture OR the page being https
+// We try auto-start, and if it fails show a tap-to-start button
 window.addEventListener('load', () => {
   const tryStart = () => {
-    if (typeof ZXing !== 'undefined') { startCamera(); }
-    else { setTimeout(tryStart, 200); }
+    if (typeof ZXing !== 'undefined') {
+      startCamera();
+    } else {
+      setTimeout(tryStart, 150);
+    }
   };
-  setTimeout(tryStart, 400);
+  // Short delay to let page paint first
+  setTimeout(tryStart, 500);
 });
 
 // ── Config — Telegram via URL param ──
@@ -647,10 +657,19 @@ async function startCamera() {
   } catch(e) {
     if (idle) idle.hidden = false;
     const msg = document.getElementById('camIdleMsg');
-    if (msg) msg.textContent = 'กรุณาอนุญาตใช้กล้อง แล้วแตะที่นี่';
+    if (msg) {
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+        msg.textContent = '⚠️ กรุณาอนุญาตใช้กล้อง';
+      } else if (e.name === 'NotFoundError') {
+        msg.textContent = '⚠️ ไม่พบกล้องในอุปกรณ์';
+      } else {
+        msg.textContent = 'แตะที่นี่เพื่อเปิดกล้อง';
+      }
+    }
     const ctrl = document.getElementById('camControls');
     if (ctrl) ctrl.hidden = true;
     scanning = false;
+    console.error('Camera error:', e.name, e.message);
   }
 }
 
