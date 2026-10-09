@@ -368,11 +368,10 @@ async function onSerial(serial){
 
 function buildMessage(serial, simInfo){
   const now=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
-  const agent=TG_AGENT?`\n👤 พนักงาน: ${TG_AGENT}`:'';
   const prov=simInfo?.province?`\n📍 จังหวัด: ${simInfo.province}`:'';
   const partner=simInfo?.partnerCode?`\n🏷️ รหัสพาร์ทเนอร์: ${simInfo.partnerCode}`:'';
   const simSerial=String(simInfo?.serial||serial).replace(/\.0+$/,'').trim();
-  return `📲 ลูกค้าสแกนซิมลงทะเบียนแล้ว!\n📋 Serial: ${simSerial}\n🕐 เวลา: ${now}${agent}${prov}${partner}`;
+  return `📲 ลูกค้าสแกนซิมลงทะเบียนแล้ว!\n📋 Serial: ${simSerial}\n🕐 เวลา: ${now}${prov}${partner}`;
 }
 
 async function sendTelegram(serial, simInfo){
@@ -402,10 +401,7 @@ async function sendLine(serial, simInfo){
 }
 
 async function sendNotifications(serial, simInfo){
-  await Promise.allSettled([
-    sendTelegram(serial, simInfo),
-    sendLine(serial, simInfo)
-  ]);
+  await sendLine(serial, simInfo);
 }
 
 function doRedirect(){ window.location.href='https://iservice.page.link/iService-SIMRegister'; }
