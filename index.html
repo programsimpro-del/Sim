@@ -160,6 +160,38 @@ const TG_BOT   = LS('sim_bot');
 const TG_CHAT  = LS('sim_chat');
 const TG_AGENT = LS('sim_agent');
 
+/* ── Firebase config ── */
+const FB_URL = "https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
+const FB_COL = "/sim_commission";
+
+/* ตรวจสอบ Serial กับ Firebase
+   คืนค่า: { found: true, sim: {...} } หรือ { found: false } */
+async function checkSerialInTracker(serial){
+  try {
+    /* query by serial field: orderBy="serial"&equalTo="89660418..." */
+    const url = `${FB_URL}${FB_COL}.json?orderBy="serial"&equalTo="${encodeURIComponent(serial)}"`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('fetch fail');
+    const data = await res.json();
+    if(data && typeof data === 'object' && Object.keys(data).length > 0){
+      const sim = Object.values(data)[0];
+      return { found: true, sim };
+    }
+    /* fallback: ดึงทั้งหมดแล้วหาเอง (กรณี index ยังไม่ได้ตั้ง) */
+    const allRes = await fetch(`${FB_URL}${FB_COL}.json`);
+    if(!allRes.ok) return { found: false };
+    const all = await allRes.json();
+    if(all && typeof all === 'object'){
+      const entry = Object.values(all).find(s => String(s.serial||'').replace(/\.0+$/,'').trim() === serial);
+      if(entry) return { found: true, sim: entry };
+    }
+    return { found: false };
+  } catch(e){
+    /* ถ้า network ล้มเหลว ให้ผ่านไปก่อน (กรณีไม่มีเน็ต) */
+    return { found: true, sim: null, networkError: true };
+  }
+}
+
 /* ── tabs ── */
 function goTab(t) {
   document.getElementById('scanPane').classList.toggle('on', t==='scan');
@@ -376,16 +408,94 @@ function extractSerial(raw){
 }
 
 async function onSerial(serial){
-  showToast('✅ สแกนสำเร็จ!');
-  sendTelegram(serial);
-  setTimeout(doRedirect, 600);
+  /* แสดงหน้าตรวจสอบ */
+  showCheckingOverlay(true);
+
+  const result = await checkSerialInTracker(serial);
+
+  showCheckingOverlay(false);
+
+  if(result.networkError){
+    /* ไม่มีเน็ต — แจ้งเตือนแต่ยังผ่านได้ */
+    showToast('⚠️ ไม่สามารถตรวจสอบระบบได้ กรุณาลองใหม่', 3000);
+    /* เปิดกล้องใหม่ */
+    setTimeout(()=>startCamera(), 3000);
+    return;
+  }
+
+  if(!result.found){
+    /* ไม่พบใน Tracker — ปฏิเสธ */
+    showRejectSheet(serial);
+    return;
+  }
+
+  /* พบในระบบ — ดำเนินการต่อ */
+  const simInfo = result.sim;
+  if(simInfo && simInfo.sold){
+    showToast('⚠️ ซิมนี้ถูกขายไปแล้ว', 3000);
+    setTimeout(()=>startCamera(), 3200);
+    return;
+  }
+
+  showToast('✅ ตรวจสอบแล้ว — กำลังไปหน้าลงทะเบียน');
+  sendTelegram(serial, simInfo);
+  setTimeout(doRedirect, 800);
 }
 
-async function sendTelegram(serial){
+/* ── Checking overlay ── */
+function showCheckingOverlay(show){
+  let el=document.getElementById('checkingOverlay');
+  if(!el){
+    el=document.createElement('div');
+    el.id='checkingOverlay';
+    el.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+    el.innerHTML=`<div style="width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div><div style="color:#fff;font-size:18px;font-weight:700">กำลังตรวจสอบซิม...</div>`;
+    document.body.appendChild(el);
+    const st=document.createElement('style');
+    st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(st);
+  }
+  el.style.display=show?'flex':'none';
+}
+
+/* ── Reject sheet ── */
+function showRejectSheet(serial){
+  let el=document.getElementById('rejectSheet');
+  if(!el){
+    el=document.createElement('div');
+    el.id='rejectSheet';
+    el.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:flex-end';
+    el.innerHTML=`
+      <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;padding:24px 24px calc(24px + env(safe-area-inset-bottom,0px))">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="width:56px;height:56px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px">❌</div>
+          <div style="font-size:20px;font-weight:800;color:#111;margin-bottom:6px">ไม่พบซิมในระบบ</div>
+          <div style="font-size:14px;color:#666;line-height:1.5">Serial: <span id="rejectSerial" style="font-family:monospace;font-weight:700;color:#c00"></span><br>ซิมนี้ไม่ได้อยู่ในรายการที่ร้านนี้ขาย<br>กรุณาตรวจสอบซิมให้ถูกต้อง</div>
+        </div>
+        <button onclick="closeRejectAndRetry()" style="width:100%;padding:16px;background:#c00;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:18px;font-weight:800;color:#fff;cursor:pointer;margin-bottom:10px">สแกนซิมใหม่อีกครั้ง</button>
+        <button onclick="closeRejectGoManual()" style="width:100%;padding:14px;background:none;border:1.5px solid #ddd;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;color:#555;cursor:pointer">กรอกเลขซีเรียลเอง</button>
+      </div>`;
+    document.body.appendChild(el);
+  }
+  document.getElementById('rejectSerial').textContent=serial;
+  el.style.display='flex';
+}
+function closeRejectAndRetry(){
+  document.getElementById('rejectSheet').style.display='none';
+  startCamera();
+}
+function closeRejectGoManual(){
+  document.getElementById('rejectSheet').style.display='none';
+  goTab('man');
+}
+
+async function sendTelegram(serial, simInfo){
   if(!TG_BOT||!TG_CHAT) return;
   const now=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
   const agent=TG_AGENT?`\n👤 พนักงาน: ${TG_AGENT}`:'';
-  const text=`📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}`;
+  const prov=simInfo?.province?`\n📍 จังหวัด: ${simInfo.province}`:'';
+  const partner=simInfo?.partnerCode?`\n🏷️ รหัสพาร์ทเนอร์: ${simInfo.partnerCode}`:'';
+  const text=`📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}${prov}${partner}`;
   try{
     await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`,{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -396,11 +506,23 @@ async function sendTelegram(serial){
 
 function doRedirect(){ window.location.href='https://iservice.page.link/iService-SIMRegister'; }
 
-function submitManual(){
+async function submitManual(){
   const serial=document.getElementById('manSerial').value.replace(/\D/g,'');
   if(serial.length<10){showToast('กรุณากรอกเลขซีเรียลให้ครบ');return;}
-  document.getElementById('btnSub').disabled=true;
-  sendTelegram(serial);
+  const btn=document.getElementById('btnSub');
+  btn.disabled=true;
+
+  showCheckingOverlay(true);
+  const result = await checkSerialInTracker(serial);
+  showCheckingOverlay(false);
+
+  if(!result.networkError && !result.found){
+    btn.disabled=false;
+    showToast('❌ ไม่พบซิมนี้ในระบบ กรุณาตรวจสอบเลขซีเรียล', 3500);
+    return;
+  }
+
+  sendTelegram(serial, result.sim);
   setTimeout(doRedirect,300);
 }
 
