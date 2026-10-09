@@ -13,7 +13,7 @@
 html, body {
   width: 100%; height: 100%;
   font-family: 'Sarabun', sans-serif;
-  font-size: 20px;
+  font-size: 16px;
   background: #fff;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -29,7 +29,7 @@ html, body {
 /* ─── HEADER ─── */
 #header {
   display: flex; align-items: center;
-  height: calc(64px + env(safe-area-inset-top, 0px));
+  height: calc(56px + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
   padding-left: 4px; padding-right: 16px;
   background: #fff;
@@ -37,14 +37,14 @@ html, body {
   flex-shrink: 0;
 }
 #btnBack {
-  width: 52px; height: 52px;
+  width: 44px; height: 44px;
   display: flex; align-items: center; justify-content: center;
   background: none; border: none; cursor: pointer; color: #c00;
 }
 #hTitle {
   flex: 1; text-align: center;
-  font-size: 28px; font-weight: 800;
-  color: #111; margin-right: 52px;
+  font-size: 20px; font-weight: 800;
+  color: #111; margin-right: 44px;
 }
 
 /* ─── TABS ─── */
@@ -53,10 +53,10 @@ html, body {
   border-bottom: 2px solid #eee;
 }
 .tab {
-  flex: 1; height: 58px;
+  flex: 1; height: 48px;
   background: none; border: none;
   font-family: 'Sarabun', sans-serif;
-  font-size: 24px; font-weight: 700;
+  font-size: 18px; font-weight: 700;
   color: #aaa; cursor: pointer;
   border-bottom: 3px solid transparent;
   position: relative; bottom: -2px;
@@ -86,7 +86,7 @@ html, body {
 #scanHint {
   position: absolute; left: 0; right: 0; top: 26%;
   text-align: center;
-  font-size: 28px; font-weight: 700; color: #fff;
+  font-size: 18px; font-weight: 700; color: #fff;
   z-index: 5; pointer-events: none;
   text-shadow: 0 2px 8px rgba(0,0,0,.7);
   padding: 0 16px; line-height: 1.5;
@@ -128,10 +128,10 @@ html, body {
   display: flex; align-items: center; justify-content: center;
 }
 #idleMsg {
-  font-size: 26px; font-weight: 800; color: #fff; text-align: center;
+  font-size: 18px; font-weight: 800; color: #fff; text-align: center;
 }
 #idleSub {
-  font-size: 20px; color: rgba(255,255,255,.5);
+  font-size: 15px; color: rgba(255,255,255,.5);
   text-align: center; padding: 0 32px; line-height: 1.5;
 }
 
@@ -166,28 +166,28 @@ html, body {
 }
 #sheetTitle {
   text-align: center;
-  font-size: 26px; font-weight: 800; color: #111;
+  font-size: 18px; font-weight: 800; color: #111;
   padding: 0 28px; line-height: 1.4; margin-bottom: 6px;
 }
 #sheetSub {
   text-align: center;
-  font-size: 20px; color: #666;
+  font-size: 15px; color: #666;
   padding: 0 28px; line-height: 1.5; margin-bottom: 20px;
 }
 .sheet-divider { height: 1px; background: #eee; margin: 0 0 4px; }
 
 .sBtn {
   display: block; width: 100%;
-  padding: 22px 28px;
+  padding: 16px 28px;
   background: none; border: none; border-top: 1px solid #eee;
   font-family: 'Sarabun', sans-serif;
-  font-size: 26px; font-weight: 700;
+  font-size: 18px; font-weight: 700;
   color: #1565c0; cursor: pointer; text-align: center;
   -webkit-appearance: none; touch-action: manipulation;
 }
 .sBtn:first-of-type { border-top: none; }
 .sBtn:active { background: #f0f4ff; }
-.sBtn.deny { color: #888; font-weight: 600; font-size: 24px; }
+.sBtn.deny { color: #888; font-weight: 600; font-size: 17px; }
 
 /* ─── TOAST ─── */
 #toast {
@@ -208,21 +208,21 @@ html, body {
   padding: 32px 24px calc(40px + env(safe-area-inset-bottom,0px));
   gap: 12px;
 }
-.fLabel { font-size: 22px; font-weight: 700; color: #555; margin-bottom: 10px; }
+.fLabel { font-size: 15px; font-weight: 700; color: #555; margin-bottom: 8px; }
 #manSerial {
-  width: 100%; border: 2px solid #ddd; border-radius: 14px;
-  padding: 18px 20px;
-  font-family: 'Sarabun', monospace; font-size: 28px; font-weight: 700;
+  width: 100%; border: 1.5px solid #ddd; border-radius: 12px;
+  padding: 14px 16px;
+  font-family: 'Sarabun', monospace; font-size: 20px; font-weight: 700;
   color: #111; outline: none; -webkit-appearance: none; background: #fff;
   transition: border-color .2s; letter-spacing: .04em;
 }
 #manSerial:focus { border-color: #c00; }
-#manSerial::placeholder { font-size: 20px; font-weight: 400; color: #bbb; letter-spacing: 0; }
-.fHint { font-size: 20px; color: #999; line-height: 1.6; }
+#manSerial::placeholder { font-size: 15px; font-weight: 400; color: #bbb; letter-spacing: 0; }
+.fHint { font-size: 14px; color: #999; line-height: 1.6; }
 .spacer { flex: 1; }
 #btnSubmit {
-  width: 100%; padding: 22px; background: #c00; border: none; border-radius: 16px;
-  font-family: 'Sarabun', sans-serif; font-size: 26px; font-weight: 800;
+  width: 100%; padding: 16px; background: #c00; border: none; border-radius: 12px;
+  font-family: 'Sarabun', sans-serif; font-size: 18px; font-weight: 800;
   color: #fff; cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
 }
 #btnSubmit:active { opacity: .85; }
@@ -262,7 +262,7 @@ html, body {
       <!-- idle overlay -->
       <div id="idle">
         <div id="idleIcon">
-          <svg width="40" height="40" viewBox="0 0 20 20" fill="none"
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
                stroke="rgba(255,255,255,.55)" stroke-width="1.5" stroke-linecap="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
@@ -398,19 +398,44 @@ async function startCamera() {
       [ZXing.DecodeHintType.POSSIBLE_FORMATS, [
         ZXing.BarcodeFormat.CODE_128,
         ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.CODE_93,
         ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.ITF,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E,
       ]],
       [ZXing.DecodeHintType.TRY_HARDER, true],
+      [ZXing.DecodeHintType.ASSUME_GS1, false],
     ]);
-    reader   = new ZXing.BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 80 });
+    reader   = new ZXing.BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 40 });
     scanning = true;
 
-    reader.decodeFromVideoElement('video', res => {
-      if (res) {
-        const serial = extractSerial(res.getText());
-        if (serial) { stopCam(); onSerial(serial); }
+    // สร้าง canvas สำหรับ crop บริเวณ scan frame แล้ว decode
+    const canvas = document.createElement('canvas');
+    const ctx    = canvas.getContext('2d');
+
+    async function scanLoop() {
+      if (!scanning) return;
+      const vid = document.getElementById('video');
+      if (vid.readyState >= 2 && vid.videoWidth > 0) {
+        // crop แค่กลางภาพ (แนวนอน 90%, สูง 40% ตรงกลาง)
+        const vw = vid.videoWidth, vh = vid.videoHeight;
+        const cx = vw * 0.05, cy = vh * 0.30;
+        const cw = vw * 0.90, ch = vh * 0.40;
+        canvas.width = cw; canvas.height = ch;
+        ctx.drawImage(vid, cx, cy, cw, ch, 0, 0, cw, ch);
+        try {
+          const result = await reader.decodeFromCanvas(canvas);
+          if (result) {
+            const serial = extractSerial(result.getText());
+            if (serial) { stopCam(); onSerial(serial); return; }
+          }
+        } catch(e) { /* NotFoundException — ปกติ */ }
       }
-    });
+      if (scanning) setTimeout(scanLoop, 40);
+    }
+    scanLoop();
 
   } catch (e) {
     idle.style.display = 'flex';
@@ -427,9 +452,16 @@ function stopCam() {
 }
 
 function extractSerial(raw) {
-  const s  = raw.replace(/\s/g, '');
-  const m  = s.match(/8966\d{14}/);  if (m)  return m[0];
+  // ลบช่องว่างและขีด
+  const s = raw.replace(/[\s\-]/g, '');
+  // 18 หลัก เริ่มด้วย 8966
+  const m = s.match(/8966\d{14}/);   if (m)  return m[0];
+  // 18 หลักทั่วไป
   const m2 = s.match(/\d{18}/);      if (m2) return m2[0];
+  // 16 หลัก เริ่มด้วย 8966 (บาร์โค้ดบางรุ่น)
+  const m3 = s.match(/8966\d{12}/);  if (m3) return m3[0];
+  // ถ้า raw มีแค่ตัวเลข 10+ หลัก ก็รับ
+  const m4 = s.match(/\d{10,}/);     if (m4) return m4[0];
   return null;
 }
 
