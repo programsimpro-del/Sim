@@ -160,6 +160,9 @@ const TG_BOT   = LS('sim_bot');
 const TG_CHAT  = LS('sim_chat');
 const TG_AGENT = LS('sim_agent');
 
+/* ── LINE Notify Token (ฝังตรงนี้) ── */
+const LINE_TOKEN = "QnDpDsNcXm0KCpHvhlg86+lk/4CbMYFuAXV/IoL+alO7UzUbfRxWzpR0eXcS93s5Ca7i41qlobXLYL+1nYzlafM/G4vN2woE/r3S5MBPkFzcFu4au4PtgTtJXMNJIE4/BVbLXx3PKS7Qcyb0E+0lqgdB04t89/1O/w1cDnyilFU=";
+
 /* ── Firebase config ── */
 const FB_URL = "https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
 const FB_COL = "/sim_commission";
@@ -347,28 +350,54 @@ function extractSerial(raw){
 async function onSerial(serial){
   const result = await checkSerialInTracker(serial);
 
-  /* ถ้าพบในระบบ (และไม่ใช่ network error) → ส่ง Telegram */
+  /* ถ้าพบในระบบ → ส่ง Telegram + LINE */
   if(result.found && !result.networkError){
-    sendTelegram(serial, result.sim);
+    sendNotifications(serial, result.sim);
   }
 
   /* ทุกกรณี → redirect ลงทะเบียนเลย */
   doRedirect();
 }
 
-async function sendTelegram(serial, simInfo){
-  if(!TG_BOT||!TG_CHAT) return;
+function buildMessage(serial, simInfo){
   const now=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false});
   const agent=TG_AGENT?`\n👤 พนักงาน: ${TG_AGENT}`:'';
   const prov=simInfo?.province?`\n📍 จังหวัด: ${simInfo.province}`:'';
   const partner=simInfo?.partnerCode?`\n🏷️ รหัสพาร์ทเนอร์: ${simInfo.partnerCode}`:'';
-  const text=`📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}${prov}${partner}`;
+  return `📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}${prov}${partner}`;
+}
+
+async function sendTelegram(serial, simInfo){
+  if(!TG_BOT||!TG_CHAT) return;
+  const text = buildMessage(serial, simInfo);
   try{
     await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({chat_id:TG_CHAT,text})
     });
   }catch(e){}
+}
+
+async function sendLine(serial, simInfo){
+  if(!LINE_TOKEN) return;
+  const text = '\n' + buildMessage(serial, simInfo);
+  try{
+    await fetch('https://notify-api.line.me/api/notify',{
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer '+LINE_TOKEN,
+        'Content-Type':'application/x-www-form-urlencoded'
+      },
+      body:'message='+encodeURIComponent(text)
+    });
+  }catch(e){}
+}
+
+async function sendNotifications(serial, simInfo){
+  await Promise.allSettled([
+    sendTelegram(serial, simInfo),
+    sendLine(serial, simInfo)
+  ]);
 }
 
 function doRedirect(){ window.location.href='https://iservice.page.link/iService-SIMRegister'; }
@@ -380,9 +409,9 @@ async function submitManual(){
 
   const result = await checkSerialInTracker(serial);
 
-  /* ถ้าพบในระบบ → ส่ง Telegram */
+  /* ถ้าพบในระบบ → ส่ง Telegram + LINE */
   if(result.found && !result.networkError){
-    sendTelegram(serial, result.sim);
+    sendNotifications(serial, result.sim);
   }
 
   /* ทุกกรณี → redirect */
