@@ -382,16 +382,16 @@ async function sendLine(serial, simInfo){
   if(!LINE_TOKEN) return;
   const LINE_GROUP_ID = "Cac144eb938df192098ad0893d012c664";
   const text = buildMessage(serial, simInfo);
+  // ใช้ Telegram Bot เป็น proxy ส่ง LINE แทน (หลีกเลี่ยง CORS)
+  // ส่งผ่าน Cloudflare Worker proxy
   try{
-    await fetch('https://api.line.me/v2/bot/message/push',{
+    await fetch('https://programsim.programthanarich.workers.dev/push',{
       method:'POST',
-      headers:{
-        'Authorization':'Bearer '+LINE_TOKEN,
-        'Content-Type':'application/json'
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
+        token: LINE_TOKEN,
         to: LINE_GROUP_ID,
-        messages:[{ type:'text', text:text }]
+        text: text
       })
     });
   }catch(e){}
