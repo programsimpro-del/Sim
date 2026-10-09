@@ -160,8 +160,14 @@ const TG_BOT   = LS('sim_bot');
 const TG_CHAT  = LS('sim_chat');
 const TG_AGENT = LS('sim_agent');
 
-/* ── LINE Notify Token (ฝังตรงนี้) ── */
+/* ── LINE Messaging API ── */
 const LINE_TOKEN = "QnDpDsNcXm0KCpHvhlg86+lk/4CbMYFuAXV/IoL+alO7UzUbfRxWzpR0eXcS93s5Ca7i41qlobXLYL+1nYzlafM/G4vN2woE/r3S5MBPkFzcFu4au4PtgTtJXMNJIE4/BVbLXx3PKS7Qcyb0E+0lqgdB04t89/1O/w1cDnyilFU=";
+const LINE_WORKER = "https://programsim.programthanarich.workers.dev/push";
+/* กลุ่ม LINE แยกตาม partnerCode */
+const LINE_GROUPS = {
+  "10049224": "Cac144eb938df192098ad0893d012c664",   /* กลุ่มเลย (วรายุทธ) */
+  "10048452": "Cbef69701481c1b513ebb068f55f8825b",   /* กลุ่มกาฬสินธุ์ */
+};
 
 /* ── Firebase config ── */
 const FB_URL = "https://simtracker-3a70d-default-rtdb.asia-southeast1.firebasedatabase.app";
@@ -174,14 +180,15 @@ async function checkSerialInTracker(serial){
     if(!res.ok) return { found: false };
     const all = await res.json();
     if(all && typeof all === 'object'){
-      const entry = Object.values(all).find(s =>
-        String(s.serial||'').replace(/[\s\-\.]/g,'').trim() === serial
-      );
+      const entry = Object.values(all).find(s => {
+        /* ตัด .0 ท้าย, ช่องว่าง, ขีด จากค่าใน Firebase */
+        const dbSerial = String(s.serial||'').replace(/\.0+$/,'').replace(/[\s\-]/g,'').trim();
+        return dbSerial === serial;
+      });
       if(entry) return { found: true, sim: entry };
     }
     return { found: false };
   } catch(e){
-    /* network error / timeout */
     return { found: false, networkError: true };
   }
 }
@@ -364,7 +371,8 @@ function buildMessage(serial, simInfo){
   const agent=TG_AGENT?`\n👤 พนักงาน: ${TG_AGENT}`:'';
   const prov=simInfo?.province?`\n📍 จังหวัด: ${simInfo.province}`:'';
   const partner=simInfo?.partnerCode?`\n🏷️ รหัสพาร์ทเนอร์: ${simInfo.partnerCode}`:'';
-  return `📲 ลูกค้าสแกนซิมแล้ว!\n📋 Serial: ${serial}\n🕐 เวลา: ${now}${agent}${prov}${partner}`;
+  const simSerial=String(simInfo?.serial||serial).replace(/\.0+$/,'').trim();
+  return `📲 ลูกค้าสแกนซิมลงทะเบียนแล้ว!\n📋 Serial: ${simSerial}\n🕐 เวลา: ${now}${agent}${prov}${partner}`;
 }
 
 async function sendTelegram(serial, simInfo){
@@ -380,19 +388,15 @@ async function sendTelegram(serial, simInfo){
 
 async function sendLine(serial, simInfo){
   if(!LINE_TOKEN) return;
-  const LINE_GROUP_ID = "Cac144eb938df192098ad0893d012c664";
+  const partnerCode = simInfo?.partnerCode||'';
+  const groupId = LINE_GROUPS[partnerCode];
+  if(!groupId) return; /* ไม่มี group สำหรับ partnerCode นี้ */
   const text = buildMessage(serial, simInfo);
-  // ใช้ Telegram Bot เป็น proxy ส่ง LINE แทน (หลีกเลี่ยง CORS)
-  // ส่งผ่าน Cloudflare Worker proxy
   try{
-    await fetch('https://programsim.programthanarich.workers.dev/push',{
+    await fetch(LINE_WORKER,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        token: LINE_TOKEN,
-        to: LINE_GROUP_ID,
-        text: text
-      })
+      body:JSON.stringify({ token: LINE_TOKEN, to: groupId, text })
     });
   }catch(e){}
 }
