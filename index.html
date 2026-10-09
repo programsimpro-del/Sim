@@ -84,7 +84,7 @@ html, body {
 }
 
 #scanHint {
-  position: absolute; left: 0; right: 0; top: 26%;
+  position: absolute; left: 0; right: 0; top: 16%;
   text-align: center;
   font-size: 18px; font-weight: 700; color: #fff;
   z-index: 5; pointer-events: none;
@@ -96,8 +96,7 @@ html, body {
 #scanFrame {
   position: absolute;
   left: 5%; right: 5%;
-  top: 50%; transform: translateY(-42%);
-  aspect-ratio: 3/1;
+  top: 26%; height: 22%;
   z-index: 5; pointer-events: none;
 }
 #scanFrame::before, #scanFrame::after,
@@ -419,21 +418,30 @@ async function startCamera() {
       if (!scanning) return;
       const vid = document.getElementById('video');
       if (vid.readyState >= 2 && vid.videoWidth > 0) {
-        // crop แค่กลางภาพ (แนวนอน 90%, สูง 40% ตรงกลาง)
         const vw = vid.videoWidth, vh = vid.videoHeight;
-        const cx = vw * 0.05, cy = vh * 0.30;
-        const cw = vw * 0.90, ch = vh * 0.40;
-        canvas.width = cw; canvas.height = ch;
-        ctx.drawImage(vid, cx, cy, cw, ch, 0, 0, cw, ch);
-        try {
-          const result = await reader.decodeFromCanvas(canvas);
-          if (result) {
-            const serial = extractSerial(result.getText());
-            if (serial) { stopCam(); onSerial(serial); return; }
-          }
-        } catch(e) { /* NotFoundException — ปกติ */ }
+
+        // ลอง crop หลายแบบ: full frame, ครึ่งบน, ครึ่งล่าง, กลาง
+        const regions = [
+          [0,    0,    vw,        vh       ],  // full
+          [0,    0,    vw,        vh*0.55  ],  // top half
+          [0,    vh*0.2, vw,      vh*0.55  ],  // upper-mid
+          [vw*0.05, vh*0.1, vw*0.9, vh*0.45], // crop tight
+        ];
+
+        for (const [sx,sy,sw,sh] of regions) {
+          canvas.width = sw; canvas.height = sh;
+          ctx.drawImage(vid, sx, sy, sw, sh, 0, 0, sw, sh);
+          try {
+            const result = await reader.decodeFromCanvas(canvas);
+            if (result) {
+              const raw = result.getText();
+              const serial = extractSerial(raw);
+              if (serial) { stopCam(); onSerial(serial); return; }
+            }
+          } catch(e) { /* NotFoundException */ }
+        }
       }
-      if (scanning) setTimeout(scanLoop, 40);
+      if (scanning) setTimeout(scanLoop, 50);
     }
     scanLoop();
 
