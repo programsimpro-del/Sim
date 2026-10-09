@@ -380,15 +380,19 @@ async function sendTelegram(serial, simInfo){
 
 async function sendLine(serial, simInfo){
   if(!LINE_TOKEN) return;
-  const text = '\n' + buildMessage(serial, simInfo);
+  const LINE_GROUP_ID = "Cac144eb938df192098ad0893d012c664";
+  const text = buildMessage(serial, simInfo);
   try{
-    await fetch('https://notify-api.line.me/api/notify',{
+    await fetch('https://api.line.me/v2/bot/message/push',{
       method:'POST',
       headers:{
         'Authorization':'Bearer '+LINE_TOKEN,
-        'Content-Type':'application/x-www-form-urlencoded'
+        'Content-Type':'application/json'
       },
-      body:'message='+encodeURIComponent(text)
+      body:JSON.stringify({
+        to: LINE_GROUP_ID,
+        messages:[{ type:'text', text:text }]
+      })
     });
   }catch(e){}
 }
